@@ -3,6 +3,7 @@ import type { MDXComponents } from 'mdx/types';
 import { Callout } from './docs/Callout';
 import { CodeBlock } from './docs/CodeBlock';
 import { DiataxisBadge } from './docs/DiataxisBadge';
+import { FeedbackWidget } from './docs/FeedbackWidget';
 import { PageStatus } from './docs/PageStatus';
 
 export function getMDXComponents(components?: MDXComponents) {
@@ -11,6 +12,7 @@ export function getMDXComponents(components?: MDXComponents) {
     Callout,
     CodeBlock,
     DiataxisBadge,
+    FeedbackWidget,
     PageStatus,
     ...components,
   } satisfies MDXComponents;
