@@ -1,5 +1,6 @@
 # deps
 /node_modules
+/.pnpm-store/
 
 # generated content
 .source
@@ -11,6 +12,8 @@
 /build
 *.tsbuildinfo
 /.lighthouseci/
+/playwright-report/
+/test-results/
 
 # misc
 .DS_Store
