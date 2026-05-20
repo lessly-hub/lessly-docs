@@ -1,0 +1,27 @@
+name: Lint
+
+on:
+  pull_request:
+    paths:
+      - 'content/**'
+      - 'scripts/lint-*.sh'
+      - 'scripts/lint-*.js'
+      - '.github/workflows/lint.yml'
+
+jobs:
+  vocab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Banned-vocab lint
+        run: ./scripts/lint-vocab.sh content
+
+  nav-depth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Nav-depth lint
+        run: node scripts/lint-nav-depth.js
