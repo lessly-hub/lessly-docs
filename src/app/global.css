@@ -2,6 +2,11 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
+/* Lessly dark-default, light via `.light` on <html>. Custom Tailwind 4
+   variant lets us write `light:hidden` / `light:block` for theme-aware
+   logos and other paired elements. */
+@custom-variant light (&:where(.light, .light *));
+
 /* ------------------------------------------------------------------ */
 /* Lessly semantic design tokens (dark default)                        */
 /* Values sourced from lessly:design skill `brand-tokens.md`.          */
