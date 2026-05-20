@@ -1,0 +1,51 @@
+# Agent instructions for docs.lessly.com
+
+This is the customer-facing documentation site for Lessly. Next.js + Fumadocs + Lessly design tokens. Deployed to https://docs.lessly.com via Cloudflare Pages (preview URLs gated by Cloudflare Access for team-only viewing).
+
+If you are an AI agent (Claude Code, Codex, Cursor, Gemini, Copilot) working in this repo, read this file in full before opening a PR.
+
+## The three load-bearing rules
+
+1. **"Extension" is a builder concept. It NEVER appears in customer-facing content.**
+   The Lessly platform is presented as one coherent product with feature areas (Deployment, Security). Internal terms like `lessly-deployment-extension` repo name stay in the codebase; they do not appear in `content/`.
+2. **"Dev Console" is an internal system. It NEVER appears in customer-facing content.**
+3. **No customer CLI exists today.** Lessly is consumed via (a) web sign-up at lessly.com and (b) the Lessly MCP server installed into the customer's AI agent (Claude Desktop, Cursor, VS Code, …). Do not document a CLI. Do not pretend one exists. **`MCP` is NOT banned** — it's the customer's install path and must be discussed plainly.
+
+The CI lint at `.github/workflows/lint-vocab.yml` enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rule 3 is enforced by review.
+
+## Choose a page type before writing
+
+Every page is exactly one of four Diátaxis types. Pick before you start:
+
+| Type | Use for | Frontmatter `diataxis:` value |
+|---|---|---|
+| Tutorial | First-time success ("Deploy your first site") | `tutorial` |
+| How-to | Solving a known problem ("Configure firewall rules") | `how-to` |
+| Explanation | Understanding a concept ("How the build system works") | `explanation` |
+| Reference | Looking up a fact (framework table, MCP tool catalog) | `reference` |
+
+Templates live in `agents/new-docs-page.md`. The PR template asks for the page type and renders the matching checklist.
+
+## Other rules
+
+- **Language:** English only.
+- **Brand:** Use Lessly design tokens. Never hardcode hex colors. See `theme.css` and the Lessly design system (https://github.com/lessly-hub/team-guidebook).
+- **Diagrams:** Hero diagrams in Figma (export to `public/diagrams/<page-slug>.svg`); inline diagrams in D2 (`.d2` files compiled at build time). No Mermaid unless the inline syntax is trivially better for a sequence diagram.
+- **PR workflow:** Branch → PR → Cloudflare Pages preview URL (Access-gated) → review by area DRI → merge. No direct pushes to main.
+- **CI:** Banned-vocab lint, nav-depth check (≤ 3), Lighthouse CLS ≤ 0.05, Playwright visual regression.
+- **Commit format:** Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). Title in English.
+
+## When in doubt
+
+- Page-type questions → `agents/new-docs-page.md`
+- PR review checklist → `agents/review-docs-pr.md`
+- How to make a diagram → `agents/diagram-system.md`
+- Brand tokens / typography → https://github.com/lessly-hub/team-guidebook (Lessly design system)
+- Bigger product / scoping questions → https://github.com/lessly-hub/lessly
+
+## What this repo is NOT
+
+- Not the marketing landing page (that's `lessly-landing`).
+- Not the API reference for service-to-service calls (those live with each service).
+- Not the builder rulebook for extension authors (that's `extensions-guide`).
+- Not the team SOP repo (that's `team-guidebook`).
