@@ -30,6 +30,7 @@ Templates live in `agents/new-docs-page.md`. The PR template asks for the page t
 
 - **Language:** English only.
 - **Brand:** Use Lessly design tokens. Never hardcode hex colors. See `theme.css` and the Lessly design system (https://github.com/lessly-hub/team-guidebook).
+- **URL convention:** docs URLs are path-based (`/docs/*`). The current subdomain (`docs.lessly.com`) is a temporary host; future migration to `lessly.com/docs/*` preserves all paths. Don't introduce route changes that strip the `/docs/` prefix.
 - **Diagrams:** Hero diagrams in Figma (export to `public/diagrams/<page-slug>.svg`); inline diagrams in D2 (`.d2` files compiled at build time). No Mermaid unless the inline syntax is trivially better for a sequence diagram.
 - **PR workflow:** Branch → PR → Cloudflare Pages preview URL (Access-gated) → review by area DRI → merge. No direct pushes to main.
 - **CI:** Banned-vocab lint, nav-depth check (≤ 3), Lighthouse CLS ≤ 0.05, Playwright visual regression.
