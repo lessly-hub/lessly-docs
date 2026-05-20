@@ -1,0 +1,20 @@
+# Catch-all
+* @asabirov @anton-khovanskiy
+
+# Brand layer
+/theme.css                @anton-khovanskiy
+/src/app/layout.tsx       @anton-khovanskiy
+/src/components/docs/     @anton-khovanskiy
+/public/diagrams/         @anton-khovanskiy
+/public/fonts/            @anton-khovanskiy
+/public/logo/             @anton-khovanskiy
+
+# Content
+/content/docs/deployment/    @IvanRoslov @alexeylivadnyi-apliteni
+/content/docs/get-started/   @asabirov
+/content/docs/concepts/      @asabirov
+/content/docs/security/      @IvanRoslov @alexeylivadnyi-apliteni
+
+# Agent surface
+/AGENTS.md           @asabirov
+/agents/             @asabirov
