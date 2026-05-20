@@ -19,6 +19,18 @@ Server runs on http://localhost:3000.
 
 Next.js · Fumadocs · Tailwind CSS · Lessly design tokens · Cloudflare Pages.
 
+## URL convention
+
+Docs URLs are path-based on `/docs/*`:
+
+- `/docs/get-started`
+- `/docs/deployment`
+- `/docs/deployment/build-system`
+
+The site currently serves from `docs.lessly.com` for operational reasons (independent deploy, different stack from the marketing site). The canonical destination is `lessly.com/docs/*` — paths are designed to survive that migration unchanged. Don't restructure routes to strip the `/docs/` prefix.
+
+The root URL `/` permanently redirects to `/docs/get-started`.
+
 ## Analytics
 
 Pageviews and feedback events flow to PostHog. The site is a **no-op for analytics** when the env vars below are unset (local dev, CI workflows, preview deploys without secrets).
