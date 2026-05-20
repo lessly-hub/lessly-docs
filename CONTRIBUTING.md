@@ -11,13 +11,13 @@ All content is **English**. PR titles and bodies are also English (overrides the
 1. Branch from `main`. No direct pushes.
 2. Pick a Diátaxis page type before writing — see [`agents/new-docs-page.md`](./agents/new-docs-page.md).
 3. Open a PR. Cloudflare Pages posts a preview URL.
-4. CI must pass: banned-vocab lint, nav-depth check, Lighthouse CLS, Playwright visual regression.
+4. CI must pass: banned-vocab lint, nav-depth check (Task 1.4); Lighthouse CLS, Playwright visual regression (Tasks 7.1, 7.2 — once enabled).
 5. Area DRI reviews. See [`.github/CODEOWNERS`](./.github/CODEOWNERS) for assignments.
 6. Squash and merge.
 
 ## Banned vocabulary
 
-Customer-facing content never uses: `extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, `*-extension` repo names. CI fails the PR if these appear in `content/`.
+Customer-facing content never uses: `extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, `*-extension` repo names. CI fails the PR if `extension` or `Dev Console` appears in `content/`. The other four are review-enforced — flag them in PR review, don't merge without a fix.
 
 `MCP` is **not** banned — it's the customer install path. Use it plainly.
 

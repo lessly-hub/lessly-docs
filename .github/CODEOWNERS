@@ -3,8 +3,9 @@
 
 # Brand layer
 /theme.css                @anton-khovanskiy
+/src/app/global.css       @anton-khovanskiy
 /src/app/layout.tsx       @anton-khovanskiy
-/src/components/docs/     @anton-khovanskiy
+/src/components/          @anton-khovanskiy
 /public/diagrams/         @anton-khovanskiy
 /public/fonts/            @anton-khovanskiy
 /public/logo/             @anton-khovanskiy
