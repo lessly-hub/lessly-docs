@@ -12,6 +12,10 @@ Two-tier system:
 
 Both get the same theme treatment so they render correctly in dark and light mode without re-export.
 
+## Prerequisites
+
+- The D2 CLI installed locally. `brew install d2` on macOS, or `curl -fsSL https://d2lang.com/install.sh | sh` on Linux. Confirm with `d2 --version`.
+
 ## Hero diagrams (Figma)
 
 ### Style conventions (copy these from existing docs heroes)
@@ -41,43 +45,16 @@ Use D2 when you need a quick sequence, a small flow, or anything that doesn't ju
 
 ### Authoring
 
-Create `content/docs/<area>/<slug>.d2`:
+1. Author the D2 file under `content/docs/<area>/<slug>.d2`. See [d2lang.com](https://d2lang.com) for syntax.
+2. Render it once locally: `pnpm d2-render content/docs/<area>/<slug>.d2 public/diagrams/<slug>.svg`. This invokes the D2 CLI and then applies `theme-diagrams` so the SVG inherits Lessly tokens.
+3. Commit BOTH the `.d2` source AND the rendered `.svg`. The source is the editable artifact; the SVG is what ships.
+4. Reference from MDX:
 
-```d2
-title: How a deploy flows
+   ```mdx
+   <img src="/diagrams/<slug>.svg" alt="…" />
+   ```
 
-direction: right
-
-source: {
-  shape: cylinder
-  label: "Git push"
-}
-
-build: "Build" {
-  shape: rectangle
-}
-
-deploy: "Deploy" {
-  shape: rectangle
-}
-
-cdn: {
-  shape: cloud
-  label: "CDN"
-}
-
-source -> build
-build -> deploy
-deploy -> cdn
-```
-
-Reference from MDX:
-
-```mdx
-<D2Diagram src="./request-lifecycle.d2" alt="…" />
-```
-
-Build step compiles `.d2` to SVG and applies the same token rewrite as hero diagrams.
+   (When build-time D2 compilation lands in a follow-up, MDX will support `<D2Diagram src="..." />` directly; for now, `<img>` is the contract.)
 
 ### Style overrides
 
