@@ -1,0 +1,31 @@
+title: Lessly request lifecycle
+
+direction: right
+
+vars: {
+  d2-config: {
+    theme-id: 200
+    sketch: false
+    pad: 32
+  }
+}
+
+user: "User request" {
+  shape: cylinder
+}
+
+edge: "Lessly edge" {
+  shape: rectangle
+}
+
+origin: "Lessly origin" {
+  shape: rectangle
+}
+
+response: "Response" {
+  shape: cylinder
+}
+
+user -> edge: "HTTPS"
+edge -> origin: "route"
+origin -> response: "render"

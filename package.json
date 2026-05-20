@@ -11,7 +11,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "theme-diagrams": "node scripts/theme-diagrams.mjs public/diagrams"
+    "theme-diagrams": "node scripts/theme-diagrams.mjs public/diagrams",
+    "d2-render": "node scripts/d2-render.mjs"
   },
   "dependencies": {
     "fumadocs-core": "16.8.12",
