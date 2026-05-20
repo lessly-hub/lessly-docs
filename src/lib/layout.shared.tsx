@@ -1,5 +1,4 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -8,6 +7,5 @@ export function baseOptions(): BaseLayoutProps {
       // Fumadocs sidebar nav title is intentionally empty.
       title: <></>,
     },
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }
