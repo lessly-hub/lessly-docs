@@ -1,0 +1,45 @@
+/* Aliases Fumadocs CSS variables to Lessly semantic tokens.
+   One file = full Fumadocs theme override. Imported after global.css.
+
+   Fumadocs UI 16.x exposes its theme tokens as `--color-fd-*` (Tailwind 4
+   `@theme` style) — see node_modules/fumadocs-ui/css/lib/default-colors.css.
+   We re-declare each one on `:root`, `.light`, and `.dark` so the alias
+   wins regardless of which class Fumadocs toggles. The Lessly token
+   referenced on the right-hand side (`--bg-primary` etc.) is itself
+   theme-aware via the `.light` override in global.css. */
+
+:root,
+.light,
+.dark {
+  /* Surfaces */
+  --color-fd-background: var(--bg-primary);
+  --color-fd-foreground: var(--text-primary);
+  --color-fd-muted: var(--bg-surface);
+  --color-fd-muted-foreground: var(--text-secondary);
+  --color-fd-popover: var(--bg-elevated);
+  --color-fd-popover-foreground: var(--text-primary);
+  --color-fd-card: var(--bg-surface);
+  --color-fd-card-foreground: var(--text-primary);
+
+  /* Accent (brand) */
+  --color-fd-primary: var(--bg-brand-bright);
+  --color-fd-primary-foreground: var(--text-on-brand);
+  --color-fd-secondary: var(--bg-surface);
+  --color-fd-secondary-foreground: var(--text-primary);
+  --color-fd-accent: var(--bg-brand-subtle);
+  --color-fd-accent-foreground: var(--text-brand);
+
+  /* Borders & rings */
+  --color-fd-border: var(--border-subtle);
+  --color-fd-ring: var(--border-focus);
+
+  /* Overlay (modal/drawer scrim) — keep Fumadocs default opacity feel */
+  --color-fd-overlay: rgb(0 0 0 / 0.4);
+
+  /* Semantic state colors (callouts, diffs) */
+  --color-fd-info: var(--text-brand);
+  --color-fd-warning: var(--text-warning);
+  --color-fd-error: var(--text-danger);
+  --color-fd-success: var(--text-success);
+  --color-fd-idea: var(--text-warning);
+}
