@@ -1,0 +1,56 @@
+---
+/**
+ * Sticky page header — 56px, blurred, brand bar.
+ * S1: visual presence only. ⌘K trigger is a non-functional button (real search lands in S3).
+ */
+const navLinks = [
+  { label: 'Get Started', href: '/docs/get-started/install' },
+  { label: 'Guides', href: '/docs/guides' },
+  { label: 'Concepts', href: '/docs/concepts' },
+  { label: 'Reference', href: '/docs/reference' },
+  { label: 'Changelog', href: '/docs/changelog' },
+];
+---
+
+<header
+  class="sticky top-0 z-50 h-[56px] border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)]/80 backdrop-blur-md"
+>
+  <div class="mx-auto flex h-full max-w-[1400px] items-center gap-8 px-6">
+    <a href="/" class="flex items-center gap-2 text-[var(--color-text-primary)] no-underline">
+      <span
+        class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-brand-bright)] font-semibold text-[var(--color-text-on-brand)]"
+        aria-hidden="true"
+      >L</span>
+      <span class="font-semibold tracking-tight">Lessly Docs</span>
+    </a>
+
+    <nav class="hidden flex-1 items-center gap-6 md:flex" aria-label="Primary">
+      {navLinks.map((link) => (
+        <a
+          href={link.href}
+          class="text-sm text-[var(--color-text-secondary)] no-underline transition-colors hover:text-[var(--color-text-primary)]"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="ml-auto flex items-center gap-3">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] px-3 py-1.5 text-xs text-[var(--color-text-tertiary)] transition-colors hover:border-[var(--color-border-default)] hover:text-[var(--color-text-secondary)]"
+        aria-label="Search docs"
+        disabled
+      >
+        <span>Search docs…</span>
+        <kbd class="rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-secondary)]">⌘K</kbd>
+      </button>
+      <a
+        href="https://lessly.com/signin"
+        class="hidden rounded-md bg-[var(--color-brand-bright)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-on-brand)] no-underline transition-colors hover:bg-[var(--color-bg-brand-bright-hover)] sm:inline-block"
+      >
+        Sign in
+      </a>
+    </div>
+  </div>
+</header>

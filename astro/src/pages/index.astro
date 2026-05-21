@@ -1,0 +1,18 @@
+---
+// Placeholder root for S1. Real landing page lands in S6.
+// Static page that redirects to the only shipped doc — Cloudflare serves the HTML
+// from [assets], the meta-refresh + canonical do the rest. No Worker invocation.
+export const prerender = true;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lessly Docs</title>
+    <meta http-equiv="refresh" content="0; url=/docs/get-started/install" />
+    <link rel="canonical" href="/docs/get-started/install" />
+  </head>
+  <body>
+    <p>Redirecting to <a href="/docs/get-started/install">/docs/get-started/install</a>.</p>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+---
+import { getNavTree } from '@/lib/nav';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '' } = Astro.props;
+const tree = getNavTree();
+---
+
+<aside
+  class="hidden h-[calc(100vh-56px)] w-[280px] shrink-0 overflow-y-auto border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] lg:block"
+  aria-label="Sidebar navigation"
+>
+  <nav class="px-4 py-6">
+    {tree.map((section) => (
+      <div class="mb-6">
+        <div
+          class="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+        >
+          {section.section}
+        </div>
+        <ul class="m-0 list-none p-0">
+          {section.items.map((item) => {
+            const active = currentPath === item.href;
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  class:list={[
+                    'flex h-8 items-center rounded-md px-2 py-3 text-sm no-underline transition-colors',
+                    active
+                      ? 'bg-[var(--color-bg-brand-subtle)] text-[var(--color-text-primary)]'
+                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]',
+                  ]}
+                >
+                  {item.title}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</aside>

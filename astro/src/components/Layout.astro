@@ -1,0 +1,55 @@
+---
+import '@/styles/global.css';
+import Header from './Header.astro';
+import Sidebar from './Sidebar.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Lessly documentation.' } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Lessly Docs</title>
+    <meta name="description" content={description} />
+    <link
+      rel="preconnect"
+      href="https://rsms.me/"
+    />
+    <link
+      rel="stylesheet"
+      href="https://rsms.me/inter/inter.css"
+    />
+    <script is:inline>
+      // Respect prefers-color-scheme on first load. Light mode opts in via `.light` on <html>.
+      try {
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (prefersLight) document.documentElement.classList.add('light');
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+    <Header />
+    <div class="mx-auto flex max-w-[1400px]">
+      <Sidebar currentPath={currentPath} />
+      <main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
+        <div class="prose mx-auto">
+          <slot />
+        </div>
+      </main>
+      <aside
+        class="hidden h-[calc(100vh-56px)] w-[240px] shrink-0 px-6 py-10 xl:block"
+        aria-label="Table of contents"
+      >
+        {/* TOC rail — S3 wires this up with scroll-spy. Empty in S1. */}
+      </aside>
+    </div>
+  </body>
+</html>

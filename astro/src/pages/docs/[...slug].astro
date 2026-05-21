@@ -1,0 +1,28 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '@/components/Layout.astro';
+import PageMeta from '@/components/PageMeta.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const entries = await getCollection('docs');
+  return entries.map((entry) => ({
+    params: { slug: entry.id.replace(/\.mdx?$/, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Layout title={entry.data.title} description={entry.data.description}>
+  <PageMeta
+    title={entry.data.title}
+    description={entry.data.description}
+    diataxis={entry.data.diataxis}
+    status={entry.data.status}
+  />
+  <Content />
+</Layout>

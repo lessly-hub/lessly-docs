@@ -1,0 +1,28 @@
+{
+  "name": "lessly-docs-astro",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "astro": "astro",
+    "pagefind": "pagefind --site dist/client",
+    "build:all": "astro build && pagefind --site dist/client"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "13.5.3",
+    "@astrojs/mdx": "5.0.6",
+    "astro": "6.3.6",
+    "clsx": "2.1.1",
+    "shiki": "4.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.0",
+    "pagefind": "1.5.2",
+    "tailwindcss": "4.3.0",
+    "typescript": "^6.0.3",
+    "wrangler": "4.93.0"
+  }
+}
