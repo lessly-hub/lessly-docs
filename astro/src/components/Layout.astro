@@ -8,10 +8,17 @@ import Breadcrumbs from './Breadcrumbs.astro';
 interface Props {
   title: string;
   description?: string;
+  /** Slug used to build the per-page OG image URL (e.g. `get-started/install`). */
+  ogSlug?: string;
 }
 
-const { title, description = 'Lessly documentation.' } = Astro.props;
+const SITE = 'https://docs.lessly.com';
+const { title, description = 'Lessly documentation.', ogSlug } = Astro.props;
 const currentPath = Astro.url.pathname;
+const canonical = new URL(currentPath, SITE).toString();
+const ogImage = ogSlug
+  ? `${SITE}/og/${ogSlug}.png`
+  : `${SITE}/og/default.png`;
 ---
 
 <!doctype html>
@@ -21,6 +28,19 @@ const currentPath = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Lessly Docs</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Lessly Docs" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
     <link
       rel="preconnect"
       href="https://rsms.me/"

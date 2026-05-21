@@ -5,15 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/generate-og.mjs",
     "preview": "wrangler dev",
     "astro": "astro",
     "pagefind": "pagefind --site dist/client",
-    "build:all": "astro build && pagefind --site dist/client"
+    "build:all": "astro build && pagefind --site dist/client",
+    "verify:ai": "node scripts/verify-ai/all.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "13.5.3",
     "@astrojs/mdx": "5.0.6",
+    "@fontsource/inter": "^5.2.8",
+    "@resvg/resvg-js": "^2.6.2",
     "@shikijs/core": "^4.1.0",
     "@shikijs/engine-javascript": "^4.1.0",
     "@shikijs/langs": "^4.1.0",
@@ -23,10 +26,12 @@
     "clsx": "2.1.1",
     "hast-util-from-html": "^2.0.3",
     "lucide": "^1.16.0",
+    "satori": "^0.26.0",
     "shiki": "4.1.0",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
     "@tailwindcss/vite": "4.3.0",
     "pagefind": "1.5.2",
     "tailwindcss": "4.3.0",
