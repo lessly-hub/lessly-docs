@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '@/components/Layout.astro';
 import PageMeta from '@/components/PageMeta.astro';
+import * as MdxComponents from '@/components/mdx';
 
 export const prerender = true;
 
@@ -24,5 +25,5 @@ const { Content } = await render(entry);
     diataxis={entry.data.diataxis}
     status={entry.data.status}
   />
-  <Content />
+  <Content components={MdxComponents} />
 </Layout>

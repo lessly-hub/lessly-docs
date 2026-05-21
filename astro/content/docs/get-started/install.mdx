@@ -5,57 +5,65 @@ diataxis: tutorial
 status: beta
 ---
 
-By the end of this page, your AI agent can call Lessly tools to deploy and manage your apps. Installation takes about 30 seconds in Claude Code.
+By the end of this page, your AI agent can call Lessly tools to deploy and manage your apps. Installation takes about 30 seconds.
 
 ## Prerequisites
 
 - A Lessly workspace — [sign up at lessly.com](https://lessly.com/signup) (Google sign-in).
 - A supported AI agent: Claude Code, Claude Desktop, or Cursor.
 
-## Install in Claude Code
+## Add Lessly to your agent
 
-The fastest path. One command in your terminal:
+Pick the agent you use. Each tab shows the only step you need.
 
-```bash
-claude mcp add lessly https://mcp.lessly.com
-```
+<Tabs defaultTab="claude-code">
+  <Tab value="claude-code" label="Claude Code">
+    Run this in your terminal:
 
-Claude Code opens your browser to authenticate. Sign in with the same Google account you used for Lessly. Once the browser confirms, the connection is live in Claude Code — no restart needed.
+    ```bash
+    claude mcp add lessly https://mcp.lessly.com
+    ```
 
-## Install in Claude Desktop
+    Claude Code opens your browser to authenticate. Sign in with the same Google account you used for Lessly. The connection is live as soon as the browser confirms — no restart.
+  </Tab>
 
-Open the config file at `~/Library/Application Support/Claude/claude_desktop_config.json` and add the Lessly server:
+  <Tab value="claude-desktop" label="Claude Desktop">
+    Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add the Lessly server:
 
-```json
-{
-  "mcpServers": {
-    "lessly": {
-      "url": "https://mcp.lessly.com"
+    ```json
+    {
+      "mcpServers": {
+        "lessly": {
+          "url": "https://mcp.lessly.com"
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-Quit and reopen Claude Desktop. Sign in when prompted.
+    Quit and reopen Claude Desktop. Sign in when prompted.
+  </Tab>
 
-## Install in Cursor
+  <Tab value="cursor" label="Cursor">
+    Open **Settings → MCP → Add Server**. Paste `https://mcp.lessly.com` as the server URL. Authenticate in the browser when prompted.
+  </Tab>
+</Tabs>
 
-In Cursor, open **Settings → MCP → Add Server**. Paste `https://mcp.lessly.com` as the server URL. Authenticate in the browser when prompted.
+<OpenInClaude toolName="lessly_list_deployments" exampleArgs="{}" />
 
-## Verify the install
+## Try it
 
 Ask your agent:
 
 > Show me my recent deployments.
 
-The agent will call the `lessly_list_deployments` tool. If you see a list (or an empty list with a confirmation that the tool worked), the install is complete.
+The agent calls the `lessly_list_deployments` tool. A list (or an empty list with a tool-call confirmation) means the install worked.
 
 ## What you can do next
 
-Your agent now has the full `lessly_*` toolset. Try:
+Your agent now has the full `lessly_*` toolset. A few prompts to try:
 
 - *"Deploy my latest commit to staging."*
 - *"Roll back the last production deploy."*
 - *"What environment variables are set on the api service?"*
 
-If a command fails, check that you signed in with the correct workspace — the MCP shows the active workspace name in its initialization message.
+If a call fails, check the workspace you signed in with — the MCP shows the active workspace name in its initialization message.

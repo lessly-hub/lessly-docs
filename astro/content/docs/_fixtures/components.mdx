@@ -1,0 +1,115 @@
+---
+title: "MDX component fixtures"
+description: "Exercises every variant of every MDX component. Draft — link checker skips."
+diataxis: reference
+status: alpha
+draft: true
+---
+
+This page is a visual harness for the four MDX prose components. It is not navigable from the sidebar — `draft: true` keeps it out of the link checker and published surface.
+
+## Callout — three variants
+
+<Callout variant="note">
+Use the `lessly_list_deployments` tool to enumerate every deployment in the active workspace. Returns up to 50 entries per call.
+</Callout>
+
+<Callout variant="warning" title="Heads up">
+The MCP server caches workspace tokens for 5 minutes. After rotating a token you may see a stale auth error for one cycle.
+</Callout>
+
+<Callout variant="danger">
+`lessly_delete_deployment` is irreversible. There is no undo and no grace period — the worker is torn down immediately.
+</Callout>
+
+<Callout variant="info">
+This should render as a `note` and emit a build-time console warning.
+</Callout>
+
+## CodeBlock — fenced (auto via rehype plugin)
+
+```ts
+import { getCollection } from 'astro:content';
+const docs = await getCollection('docs');
+```
+
+## CodeBlock — explicit with filename, highlights, line numbers
+
+<CodeBlock
+  filename="src/lib/nav.ts"
+  lang="ts"
+  highlightLines="3-5"
+  showLineNumbers
+  code={`import { getCollection } from 'astro:content';
+
+export async function getNavTree() {
+  const entries = await getCollection('docs');
+  return entries.map((entry) => entry.id);
+}
+`}
+/>
+
+## CodeBlock — diff variant
+
+<CodeBlock
+  variant="diff"
+  lang="ts"
+  code={`function activate(value) {
+-   localStorage.setItem('tab', value);
++   try { localStorage.setItem('tab', value); } catch {}
+  }
+`}
+/>
+
+## CodeBlock — terminal variant (no copy, no filename, dimmed prompt)
+
+<CodeBlock
+  variant="terminal"
+  lang="bash"
+  code={`$ claude mcp add lessly https://mcp.lessly.com
+Authenticating in browser…
+Connected.
+`}
+/>
+
+## Tabs — install variants
+
+<Tabs id="install" defaultTab="claude-code">
+  <Tab value="claude-code" label="Claude Code">
+    Run this in your terminal:
+
+    ```bash
+    claude mcp add lessly https://mcp.lessly.com
+    ```
+  </Tab>
+  <Tab value="claude-desktop" label="Claude Desktop">
+    Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "lessly": { "url": "https://mcp.lessly.com" }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="cursor" label="Cursor">
+    Settings → MCP → Add Server → `https://mcp.lessly.com`.
+  </Tab>
+</Tabs>
+
+## OpenInClaude — primary CTA
+
+Single string args:
+
+<OpenInClaude
+  toolName="lessly_list_deployments"
+  exampleArgs="{ limit: 5 }"
+/>
+
+Object args (rendered as compact JSON):
+
+<OpenInClaude
+  toolName="lessly_deploy"
+  exampleArgs={{ project: 'web', branch: 'main', env: 'production' }}
+/>

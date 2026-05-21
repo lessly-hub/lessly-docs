@@ -1,0 +1,27 @@
+---
+/**
+ * Tab — a single panel inside <Tabs>. Render order in MDX determines tab
+ * order. The `value` prop is the stable identifier used by URL query param
+ * and localStorage. `label` is the display text (defaults to `value`).
+ *
+ * The parent <Tabs> picks up `value` and `label` by scanning rendered HTML
+ * via `data-tab-*` attributes on each panel.
+ */
+interface Props {
+  value: string;
+  label?: string;
+}
+
+const { value, label } = Astro.props;
+const displayLabel = label ?? value;
+---
+
+<section
+  class="lessly-tabs__panel hidden"
+  role="tabpanel"
+  data-tab-value={value}
+  data-tab-label={displayLabel}
+  tabindex="0"
+>
+  <slot />
+</section>

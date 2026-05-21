@@ -14,15 +14,39 @@ importers:
       '@astrojs/mdx':
         specifier: 5.0.6
         version: 5.0.6(astro@6.3.6(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4))
+      '@shikijs/core':
+        specifier: ^4.1.0
+        version: 4.1.0
+      '@shikijs/engine-javascript':
+        specifier: ^4.1.0
+        version: 4.1.0
+      '@shikijs/langs':
+        specifier: ^4.1.0
+        version: 4.1.0
+      '@shikijs/themes':
+        specifier: ^4.1.0
+        version: 4.1.0
+      '@shikijs/transformers':
+        specifier: ^4.1.0
+        version: 4.1.0
       astro:
         specifier: 6.3.6
         version: 6.3.6(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      hast-util-from-html:
+        specifier: ^2.0.3
+        version: 2.0.3
+      lucide:
+        specifier: ^1.16.0
+        version: 1.16.0
       shiki:
         specifier: 4.1.0
         version: 4.1.0
+      unist-util-visit:
+        specifier: ^5.1.0
+        version: 5.1.0
     devDependencies:
       '@tailwindcss/vite':
         specifier: 4.3.0
@@ -864,6 +888,10 @@ packages:
     resolution: {integrity: sha512-emCcTnUM7yO2wltYbaxm+yLvcCI4+h8XBKc4KmJ7EZUXoSGjcCHifkI//R4OFit9ewpg7H2/9tjOuXrT2v/Knw==}
     engines: {node: '>=20'}
 
+  '@shikijs/transformers@4.1.0':
+    resolution: {integrity: sha512-YbuOcAA3kwqKDU9YSt00dtFLrY5lBXjKU3dWaMATyEyPSqBm9Jqblk/uVICxz7lcjwAHzYaEvIiMWX3mTpogkA==}
+    engines: {node: '>=20'}
+
   '@shikijs/types@4.1.0':
     resolution: {integrity: sha512-3EQWX54fMpniOrDblzAhiwiJwpiTMW6+B9DWyUd9ska483tbayFYuw47UxwuPknI31bKnySfVQ/QW+jFL4rFdA==}
     engines: {node: '>=20'}
@@ -1473,6 +1501,9 @@ packages:
   lru-cache@11.5.0:
     resolution: {integrity: sha512-5YgH9UJd7wVb9hIouI2adWpgqrrICkt070Dnj8EUY1+B4B2P9eRLPAkAAo6NICA7CEhOIeBHl46u9zSNpNu7zA==}
     engines: {node: 20 || >=22}
+
+  lucide@1.16.0:
+    resolution: {integrity: sha512-20QvduCJTB7e7K9WVvoLBuKPsYZ8d6ptwe9PIdTFiZmjVTPdFWQreBNyNCM9QQtGnqHR0PLiEQdxyhYsL1LdoA==}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -2785,6 +2816,11 @@ snapshots:
     dependencies:
       '@shikijs/types': 4.1.0
 
+  '@shikijs/transformers@4.1.0':
+    dependencies:
+      '@shikijs/core': 4.1.0
+      '@shikijs/types': 4.1.0
+
   '@shikijs/types@4.1.0':
     dependencies:
       '@shikijs/vscode-textmate': 10.0.2
@@ -3518,6 +3554,8 @@ snapshots:
   longest-streak@3.1.0: {}
 
   lru-cache@11.5.0: {}
+
+  lucide@1.16.0: {}
 
   magic-string@0.30.21:
     dependencies:

@@ -1,0 +1,119 @@
+---
+/**
+ * Callout — a boxed aside used inside MDX prose.
+ *
+ * Variants (spec §Component contracts):
+ *   - `note`    — neutral context (default).
+ *   - `warning` — something the reader could trip on.
+ *   - `danger`  — irreversible action / data loss / cost.
+ *
+ * Use rules (one line each, enforced by review):
+ *   - `note`    — extra context the reader will appreciate but does not need.
+ *   - `warning` — a foot-gun the reader will hit if they skim.
+ *   - `danger`  — a step that destroys data, costs money, or cannot be undone.
+ *
+ * Anti-patterns:
+ *   - Do not wrap an entire section in a callout — write prose.
+ *   - `info` and `success` are BANNED. If passed, we emit a console.warn at
+ *     build time and fall back to `note`. (`success` belongs in prose;
+ *     `info` is what regular paragraphs are for.)
+ */
+import Info from 'lucide/dist/esm/icons/info.mjs';
+import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs';
+import OctagonAlert from 'lucide/dist/esm/icons/octagon-alert.mjs';
+import { renderIcon, type LucideIcon } from '@/lib/icon';
+
+type Variant = 'note' | 'warning' | 'danger';
+type IncomingVariant = Variant | 'info' | 'success';
+
+interface Props {
+  variant?: IncomingVariant;
+  title?: string;
+}
+
+const { variant: requestedVariant = 'note', title } = Astro.props;
+
+let variant: Variant = 'note';
+if (requestedVariant === 'info' || requestedVariant === 'success') {
+  console.warn(
+    `[Callout] variant "${requestedVariant}" is banned (spec §AI-slop kills). ` +
+      `Falling back to "note". Use prose instead of a callout for ` +
+      `"${requestedVariant}" content.`,
+  );
+  variant = 'note';
+} else if (
+  requestedVariant === 'note' ||
+  requestedVariant === 'warning' ||
+  requestedVariant === 'danger'
+) {
+  variant = requestedVariant;
+}
+
+const variantConfig: Record<
+  Variant,
+  { icon: LucideIcon; label: string; classes: string; iconClass: string }
+> = {
+  note: {
+    icon: Info as unknown as LucideIcon,
+    label: 'Note',
+    classes:
+      'bg-[var(--color-bg-brand-subtle)] border-[var(--color-border-brand)] text-[var(--color-text-primary)]',
+    iconClass: 'text-[var(--color-icon-brand)]',
+  },
+  warning: {
+    icon: TriangleAlert as unknown as LucideIcon,
+    label: 'Warning',
+    classes:
+      'bg-[var(--color-bg-warning-subtle)] border-[var(--color-border-warning)] text-[var(--color-text-primary)]',
+    iconClass: 'text-[var(--color-icon-warning)]',
+  },
+  danger: {
+    icon: OctagonAlert as unknown as LucideIcon,
+    label: 'Danger',
+    classes:
+      'bg-[var(--color-bg-danger-subtle)] border-[var(--color-border-danger)] text-[var(--color-text-primary)]',
+    iconClass: 'text-[var(--color-icon-danger)]',
+  },
+};
+
+const cfg = variantConfig[variant];
+const heading = title ?? cfg.label;
+const iconSvg = renderIcon(cfg.icon, { size: 18, class: cfg.iconClass });
+---
+
+<aside
+  class:list={[
+    'lessly-callout',
+    'my-6 flex gap-3 rounded-md border-l-4 border-y border-r border-y-transparent border-r-transparent px-4 py-3 text-base leading-[1.6]',
+    cfg.classes,
+  ]}
+  role="note"
+  aria-label={heading}
+>
+  <span class="mt-0.5 shrink-0" set:html={iconSvg} />
+  <div class="min-w-0 flex-1">
+    <div
+      class="mb-1 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+    >
+      {heading}
+    </div>
+    <div class="lessly-callout__body">
+      <slot />
+    </div>
+  </div>
+</aside>
+
+<style is:global>
+  .lessly-callout__body > :first-child {
+    margin-top: 0;
+  }
+  .lessly-callout__body > :last-child {
+    margin-bottom: 0;
+  }
+  .lessly-callout__body p {
+    margin-bottom: 0.5rem;
+  }
+  .lessly-callout__body p:last-child {
+    margin-bottom: 0;
+  }
+</style>

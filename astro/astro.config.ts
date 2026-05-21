@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
+import rehypeCodeBlock from './src/lib/rehype/code';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,13 +11,20 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: 'compile',
   }),
-  integrations: [mdx()],
+  integrations: [
+    mdx({
+      // Disable Astro/Shiki's default tokenization for fenced blocks — our
+      // rehype plugin lifts them into <CodeBlock>, which runs Shiki itself
+      // via the shared highlighter in `@/lib/shiki/highlighter`.
+      syntaxHighlight: false,
+      rehypePlugins: [rehypeCodeBlock],
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
   markdown: {
-    shikiConfig: {
-      theme: 'github-dark-dimmed',
-    },
+    // Same as MDX: skip the built-in Shiki pass; `<CodeBlock>` owns it.
+    syntaxHighlight: false,
   },
 });
