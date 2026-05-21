@@ -3,6 +3,8 @@
  * Sticky page header — 56px, blurred, brand bar.
  * S1: visual presence only. ⌘K trigger is a non-functional button (real search lands in S3).
  */
+import ThemeToggle from './ThemeToggle.astro';
+
 const navLinks = [
   { label: 'Get Started', href: '/docs/get-started/install' },
   { label: 'Guides', href: '/docs/guides' },
@@ -45,6 +47,7 @@ const navLinks = [
         <span>Search docs…</span>
         <kbd class="rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-secondary)]">⌘K</kbd>
       </button>
+      <ThemeToggle />
       <a
         href="https://lessly.com/signin"
         class="hidden rounded-md bg-[var(--color-brand-bright)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-on-brand)] no-underline transition-colors hover:bg-[var(--color-bg-brand-bright-hover)] sm:inline-block"

@@ -1,0 +1,73 @@
+---
+/**
+ * ThemeToggle — flips between dark and light, writes the lessly_theme cookie.
+ *
+ * Both icons are rendered server-side; CSS shows the icon for the *opposite*
+ * theme so the user sees the action they're about to take. The initial
+ * `html.light` class is set by the inline bootstrap in Layout.astro before
+ * any CSS runs, so the correct icon is visible from first paint.
+ */
+import Sun from 'lucide/dist/esm/icons/sun.mjs';
+import Moon from 'lucide/dist/esm/icons/moon.mjs';
+import { renderIcon, type LucideIcon } from '@/lib/icon';
+import { THEME_COOKIE, THEME_COOKIE_MAX_AGE } from '@/lib/theme';
+
+const sunSvg = renderIcon(Sun as unknown as LucideIcon, { size: 16, class: 'lessly-theme-toggle__icon lessly-theme-toggle__icon--sun' });
+const moonSvg = renderIcon(Moon as unknown as LucideIcon, { size: 16, class: 'lessly-theme-toggle__icon lessly-theme-toggle__icon--moon' });
+---
+
+<button
+  type="button"
+  class="lessly-theme-toggle inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-default)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-primary)]"
+  data-theme-toggle
+  data-cookie-name={THEME_COOKIE}
+  data-cookie-max-age={String(THEME_COOKIE_MAX_AGE)}
+  aria-label="Switch to light theme"
+  aria-pressed="false"
+>
+  <span class="lessly-theme-toggle__slot" set:html={sunSvg} />
+  <span class="lessly-theme-toggle__slot" set:html={moonSvg} />
+</button>
+
+<style is:global>
+  /* Default = dark theme: show the sun (action: go to light). */
+  .lessly-theme-toggle__icon--moon { display: none; }
+  .lessly-theme-toggle__icon--sun { display: block; }
+  /* Light theme: show the moon (action: go to dark). */
+  html.light .lessly-theme-toggle__icon--sun { display: none; }
+  html.light .lessly-theme-toggle__icon--moon { display: block; }
+</style>
+
+<script>
+  function wire(button: HTMLButtonElement) {
+    if (button.dataset.wired === '1') return;
+    button.dataset.wired = '1';
+    const cookieName = button.dataset.cookieName ?? 'lessly_theme';
+    const maxAge = Number(button.dataset.cookieMaxAge ?? '31536000');
+
+    function syncAria() {
+      const isLight = document.documentElement.classList.contains('light');
+      button.setAttribute('aria-pressed', String(isLight));
+      button.setAttribute(
+        'aria-label',
+        isLight ? 'Switch to dark theme' : 'Switch to light theme',
+      );
+    }
+
+    syncAria();
+
+    button.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.classList.contains('light') ? 'dark' : 'light';
+      root.classList.toggle('light', next === 'light');
+      document.cookie = `${cookieName}=${next}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+      syncAria();
+    });
+  }
+
+  function wireAll() {
+    document.querySelectorAll<HTMLButtonElement>('button[data-theme-toggle]').forEach(wire);
+  }
+  wireAll();
+  document.addEventListener('astro:page-load', wireAll);
+</script>
