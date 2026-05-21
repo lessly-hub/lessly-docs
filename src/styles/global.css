@@ -429,6 +429,20 @@ body {
 }
 
 /*
+ * Tabs strip: needs `overflow-x: auto` so narrow viewports can still scroll
+ * a long tab list, but on macOS with "Always show scrollbars" (and on
+ * Windows/Linux by default) the OS reserves a permanent track even when
+ * nothing overflows. That noise is wrong for a horizontal pill row that
+ * almost always fits. Hide the visual scrollbar; keep the scrollability.
+ */
+.lessly-tabs__strip {
+  scrollbar-width: none; /* Firefox */
+}
+.lessly-tabs__strip::-webkit-scrollbar {
+  display: none; /* WebKit + Blink */
+}
+
+/*
  * Code block styles.
  * Lives here (not in CodeBlock.astro `<style is:global>`) because fenced ``` blocks
  * are rendered by `src/lib/rehype/code.ts` as raw HTML — the CodeBlock Astro component
