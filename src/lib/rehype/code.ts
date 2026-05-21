@@ -89,7 +89,7 @@ export function rehypeCodeBlock() {
       });
       const langPill =
         job.lang && job.lang !== 'text'
-          ? `<span class="rounded-sm bg-[var(--color-bg-surface)] px-1.5 py-0.5 font-mono text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-tertiary)]">${job.lang}</span>`
+          ? `<span class="rounded-sm bg-[var(--color-bg-surface)] px-1.5 py-0.5 font-mono text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-secondary)]">${job.lang}</span>`
           : '';
       const sourceAttr = escapeForAttribute(job.code);
       const header = `<header class="flex h-9 items-center justify-between border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-sunken)] px-4 text-xs text-[var(--color-text-tertiary)]"><div class="flex min-w-0 items-center gap-2">${langPill}</div><button type="button" class="lessly-code__copy flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-bright)]" data-copy-label="Copy" data-copied-label="Copied" data-source="${sourceAttr}" aria-label="Copy code to clipboard"><span class="lessly-code__copy-label">Copy</span></button></header>`;
