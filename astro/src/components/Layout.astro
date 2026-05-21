@@ -2,6 +2,8 @@
 import '@/styles/global.css';
 import Header from './Header.astro';
 import Sidebar from './Sidebar.astro';
+import Search from './Search.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
 
 interface Props {
   title: string;
@@ -41,15 +43,12 @@ const currentPath = Astro.url.pathname;
       <Sidebar currentPath={currentPath} />
       <main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
         <div class="prose mx-auto">
+          <Breadcrumbs currentPath={currentPath} />
           <slot />
         </div>
       </main>
-      <aside
-        class="hidden h-[calc(100vh-56px)] w-[240px] shrink-0 px-6 py-10 xl:block"
-        aria-label="Table of contents"
-      >
-        {/* TOC rail — S3 wires this up with scroll-spy. Empty in S1. */}
-      </aside>
+      <slot name="toc" />
     </div>
+    <Search />
   </body>
 </html>

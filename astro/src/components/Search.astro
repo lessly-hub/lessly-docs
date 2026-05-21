@@ -1,0 +1,322 @@
+---
+/**
+ * ⌘K Search modal.
+ *
+ * Renders a native `<dialog>` containing a Pagefind-powered search UI built with
+ * Lessly tokens. We use the Pagefind headless API (loaded lazily from
+ * `/pagefind/pagefind.js`) rather than `@pagefind/default-ui` so we control every
+ * pixel.
+ *
+ * Triggers:
+ *   - ⌘K (macOS) / Ctrl+K (other) anywhere on the page
+ *   - `/` key when no input / textarea / contenteditable element is focused
+ *   - Click on any element marked `[data-search-trigger]` (e.g. the Header button)
+ *
+ * Keyboard inside the modal:
+ *   - Esc closes (native <dialog> default)
+ *   - ↑ / ↓ navigate results
+ *   - Enter follows the selected result
+ *   - Tab cycles focus inside the dialog (native trap)
+ */
+---
+
+<dialog
+  id="lessly-search"
+  class="m-0 w-full max-w-2xl rounded-lg bg-[var(--color-bg-elevated)] p-0 text-[var(--color-text-primary)] shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+  aria-label="Search documentation"
+>
+  <div class="flex flex-col">
+    <div class="flex items-center border-b border-[var(--color-border-subtle)] px-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5 text-[var(--color-text-tertiary)]"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.3-4.3"></path>
+      </svg>
+      <input
+        id="lessly-search-input"
+        type="search"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Search docs…"
+        aria-label="Search query"
+        aria-controls="lessly-search-results"
+        class="w-full border-0 bg-transparent p-4 text-lg text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none"
+      />
+      <kbd
+        class="ml-2 rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-text-secondary)]"
+      >
+        Esc
+      </kbd>
+    </div>
+
+    <div
+      id="lessly-search-results"
+      role="listbox"
+      aria-label="Search results"
+      class="max-h-[60vh] min-h-[3rem] overflow-y-auto"
+    >
+      <p
+        data-search-empty
+        class="px-4 py-6 text-sm text-[var(--color-text-tertiary)]"
+      >
+        Start typing to search the docs.
+      </p>
+    </div>
+
+    <div
+      class="flex items-center gap-3 border-t border-[var(--color-border-subtle)] px-4 py-2 text-[11px] text-[var(--color-text-tertiary)]"
+    >
+      <span class="flex items-center gap-1">
+        <kbd class="rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-1 py-0.5 font-mono">↑</kbd>
+        <kbd class="rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-1 py-0.5 font-mono">↓</kbd>
+        navigate
+      </span>
+      <span class="flex items-center gap-1">
+        <kbd class="rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-1 py-0.5 font-mono">↵</kbd>
+        select
+      </span>
+      <span class="ml-auto">Powered by Pagefind</span>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* Position the dialog 15vh from the top, centered horizontally. The default <dialog>
+     centering is fine but we want it pinned to the top third like a command palette. */
+  dialog#lessly-search[open] {
+    position: fixed;
+    top: 15vh;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+  }
+
+  /* Highlighted excerpt marks come from Pagefind. */
+  dialog#lessly-search :global(mark) {
+    background-color: color-mix(in srgb, var(--color-brand-bright) 30%, transparent);
+    color: var(--color-text-primary);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+</style>
+
+<script>
+  import { loadPagefind, search } from '@/lib/search';
+  import type { PagefindResultData } from '@/lib/search';
+
+  const dialog = document.getElementById('lessly-search') as HTMLDialogElement | null;
+  const input = document.getElementById('lessly-search-input') as HTMLInputElement | null;
+  const results = document.getElementById('lessly-search-results') as HTMLElement | null;
+
+  if (dialog && input && results) {
+    let currentResults: PagefindResultData[] = [];
+    let selectedIndex = 0;
+    let debounceTimer: number | undefined;
+    let queryToken = 0;
+    let pagefindRequested = false;
+
+    function isEditableTarget(el: EventTarget | null): boolean {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (el.isContentEditable) return true;
+      return false;
+    }
+
+    function openModal() {
+      if (!dialog || dialog.open) return;
+      dialog.showModal();
+      // Kick off the lazy index load on first open.
+      if (!pagefindRequested) {
+        pagefindRequested = true;
+        loadPagefind().catch(() => {
+          /* renderError handles UX */
+        });
+      }
+      requestAnimationFrame(() => input?.focus());
+    }
+
+    function closeModal() {
+      if (!dialog?.open) return;
+      dialog.close();
+    }
+
+    function escapeHTML(str: string): string {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderEmpty(message: string) {
+      if (!results) return;
+      results.innerHTML = `<p class="px-4 py-6 text-sm text-[var(--color-text-tertiary)]">${escapeHTML(
+        message
+      )}</p>`;
+    }
+
+    function renderError(message: string) {
+      if (!results) return;
+      results.innerHTML = `<p class="px-4 py-6 text-sm text-[var(--color-text-danger)]">${escapeHTML(
+        message
+      )}</p>`;
+    }
+
+    function renderResults(items: PagefindResultData[]) {
+      if (!results) return;
+      if (items.length === 0) {
+        renderEmpty('No results.');
+        return;
+      }
+      const html = items
+        .map((item, i) => {
+          const title = item.meta?.title || item.url;
+          const excerpt = item.excerpt || '';
+          const activeClass =
+            i === selectedIndex ? 'bg-[var(--color-bg-surface)]' : '';
+          return `
+            <a
+              href="${escapeHTML(item.url)}"
+              role="option"
+              data-result-index="${i}"
+              aria-selected="${i === selectedIndex}"
+              class="block border-b border-[var(--color-border-subtle)] px-4 py-3 no-underline transition-colors hover:bg-[var(--color-bg-surface)] ${activeClass}"
+            >
+              <div class="text-[var(--color-text-primary)] text-sm font-medium">${escapeHTML(
+                title
+              )}</div>
+              <div class="text-[var(--color-text-secondary)] text-sm mt-1 leading-snug">${excerpt}</div>
+            </a>
+          `;
+        })
+        .join('');
+      results.innerHTML = html;
+
+      // Wire up click handlers (navigation on click closes the modal naturally).
+      results.querySelectorAll<HTMLAnchorElement>('[data-result-index]').forEach((el) => {
+        el.addEventListener('click', () => {
+          closeModal();
+        });
+      });
+    }
+
+    function updateSelectionStyling() {
+      if (!results) return;
+      results.querySelectorAll<HTMLAnchorElement>('[data-result-index]').forEach((el) => {
+        const idx = Number(el.dataset.resultIndex);
+        const active = idx === selectedIndex;
+        el.setAttribute('aria-selected', String(active));
+        el.classList.toggle('bg-[var(--color-bg-surface)]', active);
+        if (active) {
+          el.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    async function runSearch(query: string) {
+      const token = ++queryToken;
+      const trimmed = query.trim();
+      if (!trimmed) {
+        currentResults = [];
+        selectedIndex = 0;
+        renderEmpty('Start typing to search the docs.');
+        return;
+      }
+      try {
+        const items = await search(trimmed);
+        if (token !== queryToken) return; // a newer query superseded this one
+        currentResults = items;
+        selectedIndex = 0;
+        renderResults(items);
+      } catch (err) {
+        if (token !== queryToken) return;
+        if (err instanceof Error && err.name === 'PagefindUnavailable') {
+          renderError(
+            'Search index not built — run `pnpm build && pnpm pagefind`.'
+          );
+        } else {
+          renderError('Search failed. See console for details.');
+          console.error(err);
+        }
+      }
+    }
+
+    input.addEventListener('input', () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => runSearch(input.value), 150);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentResults.length === 0) return;
+        selectedIndex = (selectedIndex + 1) % currentResults.length;
+        updateSelectionStyling();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentResults.length === 0) return;
+        selectedIndex =
+          (selectedIndex - 1 + currentResults.length) % currentResults.length;
+        updateSelectionStyling();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = currentResults[selectedIndex];
+        if (selected) {
+          closeModal();
+          window.location.href = selected.url;
+        }
+      }
+    });
+
+    // Click on the backdrop (outside the inner content) closes the dialog.
+    // The <dialog> element itself fills the backdrop; clicks land on it directly.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        closeModal();
+      }
+    });
+
+    // Reset state when the dialog closes.
+    dialog.addEventListener('close', () => {
+      input.value = '';
+      currentResults = [];
+      selectedIndex = 0;
+      renderEmpty('Start typing to search the docs.');
+    });
+
+    // Global keyboard triggers.
+    document.addEventListener('keydown', (e) => {
+      // ⌘K / Ctrl+K opens from anywhere.
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (dialog.open) closeModal();
+        else openModal();
+        return;
+      }
+      // `/` opens unless the user is typing into a field.
+      if (e.key === '/' && !dialog.open && !isEditableTarget(e.target)) {
+        e.preventDefault();
+        openModal();
+      }
+    });
+
+    // Bind every [data-search-trigger] element (e.g. the Header search button).
+    document.querySelectorAll<HTMLElement>('[data-search-trigger]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal();
+      });
+    });
+  }
+</script>

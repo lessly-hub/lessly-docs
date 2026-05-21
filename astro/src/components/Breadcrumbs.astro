@@ -1,0 +1,68 @@
+---
+/**
+ * Breadcrumbs (Slice 3).
+ *
+ * Pattern: `Lessly · Get Started · Install`
+ * Renders above the page H1 in `Layout.astro`. Neutral separator dots, no
+ * decoration, `text-text-tertiary` at `text-sm`.
+ *
+ * The trail is derived from `getNav()` so labels match the sidebar exactly.
+ * If the current path isn't in the nav (e.g. landing pages), only "Lessly" shows.
+ */
+import { getNav } from '@/lib/nav';
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+const trail: Crumb[] = [{ label: 'Lessly', href: '/' }];
+
+if (currentPath.startsWith('/docs/')) {
+  const groups = await getNav();
+  const match = currentPath.match(/^\/docs\/([^/]+)/);
+  const groupId = match ? match[1] : '';
+  const group = groups.find((g) => g.id === groupId);
+  if (group) {
+    const groupHref = `/docs/${group.id}`;
+    trail.push({ label: group.label, href: groupHref });
+    const leaf = group.items.find((item) => item.href === currentPath);
+    if (leaf && leaf.href !== groupHref) {
+      trail.push({ label: leaf.title });
+    }
+  }
+}
+
+const showTrail = trail.length > 1;
+---
+
+{showTrail && (
+  <nav
+    aria-label="Breadcrumb"
+    class="mb-6 text-sm text-[var(--color-text-tertiary)]"
+  >
+    <ol class="m-0 flex flex-wrap items-center gap-x-2 list-none p-0">
+      {trail.map((crumb, i) => (
+        <li class="flex items-center gap-x-2">
+          {i > 0 && <span aria-hidden="true">·</span>}
+          {crumb.href ? (
+            <a
+              href={crumb.href}
+              class="text-[var(--color-text-tertiary)] no-underline transition-colors hover:text-[var(--color-text-secondary)]"
+            >
+              {crumb.label}
+            </a>
+          ) : (
+            <span aria-current="page" class="text-[var(--color-text-secondary)]">{crumb.label}</span>
+          )}
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}

@@ -1,0 +1,151 @@
+---
+/**
+ * Right-rail table of contents with IntersectionObserver scroll-spy.
+ *
+ * Contract (spec §Component contracts):
+ *  - Hide entire <aside> when fewer than 2 h2 headings.
+ *  - Initial active heading derived from `location.hash` on load (not from IO).
+ *  - Short pages: if no IO entry fires within 2s, pin the last heading.
+ *  - `prefers-reduced-motion: reduce` → disable smooth scroll on anchor click.
+ *  - No IO support → default first heading active and skip the observer.
+ */
+import type { MarkdownHeading } from 'astro';
+import { buildToc, shouldRenderToc } from '@/lib/toc';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const items = buildToc(headings);
+const render = shouldRenderToc(items);
+---
+
+{render && (
+  <aside
+    class="hidden h-[calc(100vh-56px)] w-[240px] shrink-0 px-6 py-10 xl:block"
+    aria-label="Table of contents"
+    data-toc-root
+  >
+    <nav class="sticky top-[72px]">
+      <div
+        class="mb-3 text-xs font-medium uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+      >
+        On this page
+      </div>
+      <ul class="m-0 list-none p-0 text-sm">
+        {items.map((h) => (
+          <li>
+            <a
+              href={`#${h.id}`}
+              data-toc-link
+              data-toc-target={h.id}
+              class:list={[
+                'flex h-7 items-center border-l-2 border-transparent text-[var(--color-text-tertiary)] no-underline transition-colors hover:text-[var(--color-text-primary)]',
+                h.level === 3 ? 'pl-6' : 'pl-3',
+              ]}
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </aside>
+)}
+
+{render && (
+  <script>
+    {
+      // Vanilla TS scroll-spy island. Runs once per page load.
+      // Active classes mirror the visual contract in the spec:
+      //   active   → text-text-primary border-brand-bright
+      //   inactive → text-text-tertiary border-transparent
+    }
+    (() => {
+      const root = document.querySelector<HTMLElement>('[data-toc-root]');
+      if (!root) return;
+
+      const links = Array.from(
+        root.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'),
+      );
+      if (links.length === 0) return;
+
+      const byId = new Map<string, HTMLAnchorElement>();
+      for (const a of links) {
+        const id = a.dataset.tocTarget;
+        if (id) byId.set(id, a);
+      }
+
+      const ACTIVE_TEXT = 'text-[var(--color-text-primary)]';
+      const ACTIVE_BORDER = 'border-[var(--color-brand-bright)]';
+      const INACTIVE_TEXT = 'text-[var(--color-text-tertiary)]';
+      const INACTIVE_BORDER = 'border-transparent';
+
+      function setActive(id: string | null) {
+        for (const a of links) {
+          const isActive = a.dataset.tocTarget === id;
+          a.classList.toggle(ACTIVE_TEXT, isActive);
+          a.classList.toggle(ACTIVE_BORDER, isActive);
+          a.classList.toggle(INACTIVE_TEXT, !isActive);
+          a.classList.toggle(INACTIVE_BORDER, !isActive);
+          if (isActive) a.setAttribute('aria-current', 'true');
+          else a.removeAttribute('aria-current');
+        }
+      }
+
+      // 1. Initial active heading: location.hash wins; else first item.
+      const hashId = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+      const initialId = hashId && byId.has(hashId) ? hashId : links[0].dataset.tocTarget ?? null;
+      setActive(initialId);
+
+      // 2. Honor reduced-motion preference on anchor clicks.
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      for (const a of links) {
+        a.addEventListener('click', (e) => {
+          const id = a.dataset.tocTarget;
+          if (!id) return;
+          const target = document.getElementById(id);
+          if (!target) return;
+          e.preventDefault();
+          target.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+          history.replaceState(null, '', `#${id}`);
+          setActive(id);
+        });
+      }
+
+      // 3. Fallback: no IO support → leave initial active, skip observer.
+      if (typeof IntersectionObserver === 'undefined') return;
+
+      // 4. Scroll-spy: switch active when heading enters top third of viewport.
+      let sawIntersection = false;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          // Pick the topmost intersecting heading (smallest boundingClientRect.top
+          // that is still >= 0-ish). Fall back to the most recently entered.
+          const intersecting = entries.filter((e) => e.isIntersecting);
+          if (intersecting.length === 0) return;
+          sawIntersection = true;
+          intersecting.sort(
+            (a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top,
+          );
+          const id = intersecting[0].target.id;
+          if (id) setActive(id);
+        },
+        { rootMargin: '0px 0px -66% 0px', threshold: 0 },
+      );
+
+      for (const id of byId.keys()) {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      }
+
+      // 5. Short-page guard: if nothing has intersected after 2s, pin last heading.
+      window.setTimeout(() => {
+        if (sawIntersection) return;
+        const lastId = links[links.length - 1].dataset.tocTarget ?? null;
+        setActive(lastId);
+      }, 2000);
+    })();
+  </script>
+)}

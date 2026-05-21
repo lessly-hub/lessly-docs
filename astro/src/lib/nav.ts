@@ -1,27 +1,184 @@
 /**
- * Sidebar navigation tree.
+ * Sidebar navigation tree (Slice 3).
  *
- * S1: hardcoded one-entry stub. The real file-tree derivation lands in S3
- * (walks `content/docs/**` plus optional `_order.json` per section).
+ * Derives the sidebar from the `docs` Content Collection plus two control files:
+ *   - `content/docs/_groups.json`            → group order + labels
+ *   - `content/docs/<group>/_order.json`     → item order within a group (optional)
+ *
+ * Conflict rules (per spec §Architecture step 5, CI-linted):
+ *   - If `_order.json` exists in a group, every `.mdx` file in that group MUST appear
+ *     in it. Missing files throw at build with the offending filename.
+ *   - Every entry in `_order.json` MUST resolve to a real file. Unknown entries
+ *     throw at build with the offending entry.
+ *   - If `_order.json` does not exist, items are ordered alphabetically by filename.
+ *
+ * Folders prefixed with `_` (e.g. `_fixtures/`) are excluded from the nav.
+ *
+ * ID-to-group mapping (Astro Content Collection quirks):
+ *   - `<group>/<page>.mdx`  → id `<group>/<page>`              → group `<group>`
+ *   - `<group>/index.mdx`   → id `<group>`  (Astro strips `index`) → group `<group>`,
+ *                                                                    filename `index`
+ *
+ * Implementation note: control files come via `import.meta.glob` (eager, `import: 'default'`)
+ * instead of `node:fs`. That keeps the module pure ESM so it works inside the Cloudflare
+ * prerender worker (miniflare), where `node:fs` and `fileURLToPath(import.meta.url)` are
+ * not available.
  */
+
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+export type NavStatus = 'alpha' | 'beta' | 'stable';
 
 export interface NavItem {
   title: string;
   href: string;
+  status?: NavStatus;
 }
 
-export interface NavSection {
-  section: string;
+export interface NavGroup {
+  id: string;
+  label: string;
   items: NavItem[];
 }
 
-export type NavTree = NavSection[];
+interface GroupsConfig {
+  order: string[];
+  labels: Record<string, string>;
+}
 
-export function getNavTree(): NavTree {
-  return [
-    {
-      section: 'Get Started',
-      items: [{ title: 'Install', href: '/docs/get-started/install' }],
-    },
-  ];
+// Eager-glob every JSON under content/docs/.
+const jsonModules = import.meta.glob<unknown>('/content/docs/**/*.json', {
+  eager: true,
+  import: 'default',
+});
+
+function pickJson(suffix: string): unknown | undefined {
+  for (const [key, value] of Object.entries(jsonModules)) {
+    if (key.endsWith(suffix)) return value;
+  }
+  return undefined;
+}
+
+function loadGroupsConfig(): GroupsConfig {
+  const raw = pickJson('/content/docs/_groups.json');
+  if (!raw) {
+    throw new Error('[nav] Missing content/docs/_groups.json');
+  }
+  const parsed = raw as Partial<GroupsConfig>;
+  if (!Array.isArray(parsed.order) || typeof parsed.labels !== 'object' || !parsed.labels) {
+    throw new Error(
+      '[nav] Invalid _groups.json: expected { order: string[], labels: Record<string,string> }',
+    );
+  }
+  return parsed as GroupsConfig;
+}
+
+function loadOrderFile(groupId: string): string[] | null {
+  const raw = pickJson(`/content/docs/${groupId}/_order.json`);
+  if (!raw) return null;
+  if (!Array.isArray(raw) || !raw.every((x) => typeof x === 'string')) {
+    throw new Error(
+      `[nav] Invalid _order.json in group "${groupId}": expected string[] of filenames (without .mdx).`,
+    );
+  }
+  return raw as string[];
+}
+
+interface Located {
+  entry: CollectionEntry<'docs'>;
+  groupId: string;
+  filename: string; // 'index' for a group landing page
+}
+
+function locate(entry: CollectionEntry<'docs'>, knownGroupIds: Set<string>): Located | null {
+  const id = entry.id.replace(/\.mdx?$/, '');
+  // Group landing page: `<group>/index.mdx` → id `<group>`.
+  if (!id.includes('/')) {
+    if (knownGroupIds.has(id)) {
+      return { entry, groupId: id, filename: 'index' };
+    }
+    return null;
+  }
+  const parts = id.split('/');
+  const groupId = parts[0];
+  const filename = parts[parts.length - 1];
+  return { entry, groupId, filename };
+}
+
+function entryHref(entry: CollectionEntry<'docs'>): string {
+  const slug = entry.id.replace(/\.mdx?$/, '').replace(/\/index$/, '');
+  return `/docs/${slug}`;
+}
+
+export async function getNav(): Promise<NavGroup[]> {
+  const groupsConfig = loadGroupsConfig();
+  const knownGroupIds = new Set(groupsConfig.order);
+  const entries = await getCollection('docs');
+
+  const byGroup = new Map<string, Located[]>();
+  for (const entry of entries) {
+    if (entry.data.draft) continue;
+    const loc = locate(entry, knownGroupIds);
+    if (!loc) continue;
+    if (loc.groupId.startsWith('_')) continue;
+    const bucket = byGroup.get(loc.groupId) ?? [];
+    bucket.push(loc);
+    byGroup.set(loc.groupId, bucket);
+  }
+
+  const groups: NavGroup[] = [];
+  for (const groupId of groupsConfig.order) {
+    const label = groupsConfig.labels[groupId];
+    if (!label) {
+      throw new Error(`[nav] _groups.json: missing label for group "${groupId}".`);
+    }
+    const bucket = byGroup.get(groupId);
+    if (!bucket || bucket.length === 0) continue;
+
+    const filenamesPresent = new Set(bucket.map((l) => l.filename));
+    const order = loadOrderFile(groupId);
+
+    let ordered: Located[];
+    if (order) {
+      // Rule 2: every entry in _order.json must resolve to a file.
+      for (const name of order) {
+        if (!filenamesPresent.has(name)) {
+          throw new Error(
+            `[nav] _order.json in "${groupId}" references "${name}" but content/docs/${groupId}/${name}.mdx does not exist.`,
+          );
+        }
+      }
+      // Rule 1: every file must appear in _order.json.
+      const orderSet = new Set(order);
+      for (const name of filenamesPresent) {
+        if (!orderSet.has(name)) {
+          throw new Error(
+            `[nav] content/docs/${groupId}/${name}.mdx exists but is missing from content/docs/${groupId}/_order.json. Add "${name}" to the order array.`,
+          );
+        }
+      }
+      const byName = new Map(bucket.map((l) => [l.filename, l] as const));
+      ordered = order.map((name) => byName.get(name)!);
+    } else {
+      // Rule 3: alphabetical by filename. Convention: `index` sorts first
+      // so a group's landing page shows at the top of its section.
+      ordered = [...bucket].sort((a, b) => {
+        if (a.filename === 'index') return -1;
+        if (b.filename === 'index') return 1;
+        return a.filename.localeCompare(b.filename);
+      });
+    }
+
+    groups.push({
+      id: groupId,
+      label,
+      items: ordered.map(({ entry }) => ({
+        title: entry.data.title,
+        href: entryHref(entry),
+        ...(entry.data.status ? { status: entry.data.status } : {}),
+      })),
+    });
+  }
+
+  return groups;
 }
