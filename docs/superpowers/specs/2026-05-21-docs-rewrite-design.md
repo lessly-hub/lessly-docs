@@ -29,6 +29,8 @@
 | Axis | Decision |
 |---|---|
 | Engine framework | **Astro 6** (was Next.js + Fumadocs) |
+| Cloudflare target | **Workers** via `@astrojs/cloudflare`, `output: 'directory'`, `[assets]` binding to `./dist` |
+| Prerender policy | All `/docs/*`, `/llms*.txt`, `/mcp/tools.json`, `/sitemap.xml`, `/og/*` are `export const prerender = true`. Only `/api/*` runs on the Worker. |
 | Styling | Tailwind v4 (Lightning CSS) |
 | Markup | `@mdx-js/mdx` + `remark-frontmatter` + `remark-mdx-frontmatter` + `remark-gfm` |
 | Syntax | `shiki` + `@shikijs/transformers`, scoped `bundledLanguages` |
@@ -52,13 +54,13 @@
 1. Astro walks `content/docs/**/*.mdx`.
 2. MDX compiler parses each file. Frontmatter (`title`, `description`, `diataxis`, `status`, `updated`) is typed via an Astro Content Collection Zod schema.
 3. Body compiles to static HTML at build. Shiki tokenizes code at build — zero client-side highlighter.
-4. `src/lib/nav.ts` derives the sidebar tree from the file tree plus optional `_order.json` per section for explicit ordering.
+4. `src/lib/nav.ts` derives the sidebar tree from the file tree plus optional `_order.json` per section. **Conflict rules (CI-linted):** every file in a section MUST appear in `_order.json` if `_order.json` exists; entries in `_order.json` MUST resolve to a file; unknown or unresolved entries fail the build.
 5. `src/lib/toc.ts` walks the AST per page to emit a TOC from `h2`/`h3` headings.
 6. After `astro build`, `pagefind` runs against the static output and generates `/pagefind/`. The search UI loads the index lazily on ⌘K.
 
 ### First-party modules
 
-`src/content/config.ts` · `src/lib/nav.ts` · `src/lib/toc.ts` · `src/lib/og.ts` · `src/lib/llms.ts` · `src/pages/api/search.ts` plus Astro components: `Layout`, `Header`, `Sidebar`, `TOC`, `PageMeta`, `CodeBlock`, `Callout`, `Tabs`, `McpToolCard`, `OpenInClaude`, `AgentTranscript`, `FeedbackWidget`, `ThemeToggle`, `Search`.
+`src/content/config.ts` · `src/lib/nav.ts` · `src/lib/toc.ts` · `src/lib/og.ts` · `src/lib/llms.ts` · `src/pages/docs/[...slug].mdx.ts` (raw MDX endpoint) · `src/pages/docs/[...slug].md.ts` (plain-MD endpoint) · `src/pages/api/search.ts` plus Astro components: `Layout`, `Header`, `Sidebar`, `TOC`, `PageMeta`, `CodeBlock`, `Callout`, `Tabs`, `McpToolCard`, `OpenInClaude`, `AgentTranscript`, `Search`.
 
 Estimated engine + components: **~600–900 LoC**.
 
@@ -69,7 +71,7 @@ Estimated engine + components: **~600–900 LoC**.
 | `/llms.txt` | Index: title + description + path | LLM discovery |
 | `/llms-full.txt` | All bodies as plain markdown, concatenated | LLM bulk ingest |
 | `/docs/<slug>.md` | Per-page plain markdown | LLM per-page |
-| `/docs/<slug>.mdx` | Per-page raw MDX | Agentic editing |
+| `/docs/<slug>.mdx` | Per-page raw MDX served by `src/pages/docs/[...slug].mdx.ts`, `content-type: text/markdown; charset=utf-8`, body is the unprocessed file | Agentic editing |
 | `/mcp/tools.json` | Machine-readable MCP tool catalog | MCP server + LLM |
 | `/sitemap.xml` | Standard | Crawlers |
 | `/og/<slug>.png` | Per-page OG, tokenized | Social |
@@ -78,7 +80,8 @@ All seven generated from the same Astro Content Collection by `src/lib/llms.ts`.
 
 ### Build budget
 
-- `astro build` < 10s for ≤ 50 pages; < 30s for ≤ 200.
+- `astro build` < 10s for ≤ 50 pages; < 30s for ≤ 200, excluding OG image generation.
+- `/og/*.png` cached by content hash; cold OG build budgeted separately at ≤ 60s for 200 pages.
 - Pagefind index < 5s.
 - Default page weight (no interactive island on page): < 15 KB gz.
 - Default page client JS: 0 bytes. Islands ship < 5 KB gz combined.
@@ -87,29 +90,71 @@ All seven generated from the same Astro Content Collection by `src/lib/llms.ts`.
 
 ### Typography (Lessly tokens)
 
-| Role | Font | Size token | Weight |
-|---|---|---|---|
-| Page H1 | Inter | `4xl` (2.5rem) | extrabold |
-| Section H2 | Inter | `2xl` (1.75rem) | semibold |
-| Sub H3 | Inter | `xl` (1.4375rem) | semibold |
-| Body | Inter | `base` (1rem) | regular |
-| Lead | Inter | `lg` (1.1875rem) regular, `text-text-secondary` |
-| Code | Fira Mono | `sm` (0.8125rem) | regular |
-| Homepage hero only | Instrument Serif | `display` (3.5625rem) | regular |
+| Role | Font | Size token | Weight | Line-height |
+|---|---|---|---|---|
+| Page H1 | Inter | `4xl` (2.5rem) | extrabold | 1.1 |
+| Section H2 | Inter | `2xl` (1.75rem) | semibold | 1.2 |
+| Sub H3 | Inter | `xl` (1.4375rem) | semibold | 1.3 |
+| Body | Inter | `base` (1rem) | regular | 1.6 |
+| Lead | Inter | `lg` (1.1875rem) regular, `text-text-secondary` | regular | 1.5 |
+| Code | Fira Mono | `sm` (0.8125rem) | regular | 1.55 |
+| Homepage hero only | Instrument Serif | `display` (3.5625rem) | regular | 1.05 |
 
 Instrument Serif is restricted to the marketing-leaning `/` hero. Docs pages stay all-Inter.
 
+Reading measure: **68ch**, clamped at 720px. Inter feature flags: `"ss01", "cv11"`. Tables use tabular nums.
+
+### Spacing (vertical rhythm)
+
+| Surface | Value |
+|---|---|
+| Sidebar item row | 32 px (12 px vertical padding) |
+| TOC item row | 28 px |
+| H2 top margin / bottom margin | 48 px / 16 px |
+| H3 top margin / bottom margin | 32 px / 12 px |
+| Paragraph spacing | 16 px |
+| Code block surround | 24 px |
+| Column gutter (3-col) | 48 px at lg, 32 px at md |
+
+### Token map (every surface named)
+
+| Surface | Token |
+|---|---|
+| Page background | `bg-bg-primary` |
+| Sidebar / TOC rail | `bg-bg-secondary` |
+| Code block background | `bg-bg-elevated` |
+| Inline code background | `bg-bg-elevated`, text `text-brand-bright` |
+| Body text | `text-text-primary` |
+| Lead / TOC inactive | `text-text-secondary` / `text-text-tertiary` |
+| Eyebrow label | `text-text-tertiary` (text-xs uppercase, letter-spacing 0.04em) |
+| Link default | `text-brand-bright`, underline offset 3 px, thickness 1 px |
+| Link hover | `text-brand-bright`, underline thickness 2 px |
+| Focus ring | `ring-2 ring-brand-bright ring-offset-2 ring-offset-bg-primary` |
+| Selection | `bg-brand-bright/30` |
+| Primary CTA | `bg-brand-bright`, `text-text-on-brand` |
+| Divider | `border-border-subtle` |
+
 ### Layout
 
-Three columns at `lg:` and up; single-column with drawer sidebar at `md:` and below.
+- 3-col at **≥ 1280 px**: sidebar (280) + reading (max 720) + TOC rail (240), gutters 48 px.
+- 2-col at **1024–1279 px**: sidebar + reading; TOC rail hidden.
+- 1-col at **< 1024 px**: drawer sidebar; no TOC rail.
+- TOC rail hides when the page has fewer than 2 `h2` headings.
 
-- Header: 56 px, sticky, `backdrop-blur`, `bg-bg-primary/80`. Logo + nav (Get Started, Guides, Concepts, Reference, Changelog) + `⌘K` search trigger + "Sign in" CTA in `bg-brand-bright`.
+- Header: 56 px, sticky, `backdrop-blur`, `bg-bg-primary/80`. Logo + nav (Get Started · Guides · Concepts · Reference · Changelog) + `⌘K` search trigger + "Sign in" CTA in `bg-brand-bright`.
 - Sidebar: 280 px, sticky, scrollable, current section expanded.
-- Reading column: max 720 px wide, Inter base, generous line-height.
-- TOC rail: 240 px, sticky, scroll-spy active state in `text-text-primary`, inactive in `text-text-tertiary`.
-- Per-page footer: feedback widget, prev/next, edit-on-GitHub, last updated.
+- Reading column: max 720 px (≈ 68ch).
+- TOC rail: 240 px, sticky, IntersectionObserver scroll-spy.
+- Per-page footer: prev/next, edit-on-GitHub, last updated. **(`FeedbackWidget` deferred — see §AI-slop kills below.)**
 
-Tokens used: `bg-bg-primary` page · `bg-bg-secondary` rails · `bg-bg-elevated` code · `border-border-subtle` dividers · `text-text-primary` body · `text-text-secondary` lead/TOC · `bg-brand-bright` primary CTAs.
+### Page-header pattern
+
+Every docs page header follows this sequence with no decoration between rows:
+
+1. Diátaxis **eyebrow** label: `Tutorial` / `How-to` / `Explanation` / `Reference`. Text only — no badge, no color (one neutral token `text-text-tertiary`, `text-xs uppercase`, letter-spacing 0.04em).
+2. `<h1>` page title.
+3. Lead paragraph: `text-lg text-text-secondary`.
+4. Status pill row: `alpha` / `beta` / `stable` (color reserved here).
 
 ### Component contracts
 
@@ -118,17 +163,19 @@ Each component has one job. Each is tested via Playwright snapshot + a Vitest un
 - `Layout` — frame; takes `frontmatter`, slots in `Sidebar`, `TOC`, `<slot/>`.
 - `Header` — sticky; no state.
 - `Sidebar` — renders `nav.ts` output; vanilla TS handles collapse/expand of sections.
-- `TOC` — IntersectionObserver-based scroll-spy (~30 lines TS).
-- `PageMeta` — Diátaxis badge (color-coded), status pill (`alpha`/`beta`/`stable`), edit-on-GitHub link, last updated.
-- `CodeBlock` — pre-tokenized Shiki HTML rendered server-side; clipboard copy is ~20 lines vanilla TS; filename pill + language pill above.
-- `Callout` — `info` / `note` / `warning` / `danger` / `success` variants using `bg-*-subtle` + `border-border-*` tokens.
-- `Tabs` — agent variants (Claude Desktop / Claude Code / Cursor); state persisted to localStorage so the choice survives across pages (~40 lines TS).
-- `McpToolCard` — name, summary, arguments table, example invocation, `OpenInClaude` CTA, related links. Data-driven from `content/mcp-tools.json`.
-- `OpenInClaude` — `claude://` deep link with clipboard fallback that copies a ready-to-paste prompt.
-- `AgentTranscript` — styled chat exchange (user → agent → tool result) rendered as semantic HTML, indexable by Pagefind and llms.txt.
-- `FeedbackWidget` — yes/no + optional comment; POSTs `docs.feedback.submitted` to PostHog.
-- `ThemeToggle` — toggles `light` class on `<html>`, persists to localStorage.
+- `TOC` — IntersectionObserver-based scroll-spy. Initial active heading derived from `location.hash` on load (not from IO). Short pages pin the last heading. `prefers-reduced-motion` disables smooth scroll. Falls back to first heading if no IO support.
+- `PageMeta` — neutral Diátaxis eyebrow (no color), status pill, edit-on-GitHub link, last-updated.
+- `CodeBlock` — pre-tokenized Shiki HTML rendered server-side; clipboard copy ≈ 20 lines vanilla TS; filename pill + language pill above. Line numbers off by default, on via frontmatter flag. Line highlighting `{1,3-5}` syntax. Diff variant: `+` green tint, `-` red tint, no language pill. Terminal variant: no copy button, no filename pill, prompt char dimmed. Long lines: horizontal scroll, no wrap.
+- `Callout` — three variants only: `note` / `warning` / `danger`. Uses `bg-*-subtle` + `border-border-*` tokens. Each has one named lucide icon and a one-line use rule. Anti-pattern: do not wrap an entire section in a callout. `info` and `success` are banned (write prose).
+- `Tabs` — agent variants (Claude Desktop / Claude Code / Cursor). State precedence: URL `?tab=` query param > localStorage > frontmatter `defaultTab` > first tab. URL wins so deep links land on the intended variant. ≈ 40 lines TS.
+- `McpToolCard` — name (mono), summary, arguments table (columns: name [mono], type [mono, `text-text-tertiary`], required [• / —], description), example invocation (`CodeBlock` with filename pill "Claude Code"), `OpenInClaude` CTA, related links (max 3). Data-driven from `content/mcp-tools.json`.
+- `OpenInClaude` — `claude://` deep link with clipboard fallback. Clipboard text is verbatim: `Run the {tool_name} MCP tool with: {example_args}`. Button shows "Open in Claude"; on copy, swaps to "Copied — paste into Claude" for 2 s.
+- `AgentTranscript` — rendered as `<ol role="log" aria-label="Agent transcript">` of `<li>` turns. Each turn has a visually-hidden speaker label (`<span class="sr-only">User said:</span>`). Tool results are `<figure>` with `<figcaption>` (filename pill = tool name). Turns separated by 16 px gap. Role labels left-aligned, `text-xs uppercase`: USER (`text-text-secondary`), CLAUDE (`text-brand-bright`), TOOL (`text-text-tertiary`). Tool results render inside a `bg-bg-elevated` block. Passes axe-core in tests.
 - `Search` — ⌘K modal, Pagefind UI wrapper, keyboard-navigable.
+
+**Deferred from MVP (see §AI-slop kills):**
+- `FeedbackWidget` — deferred to post-S6 behind a config flag. PostHog page-view + scroll depth covers 80% of the same signal.
+- Visible `ThemeToggle` — deferred. Ship dark/light token system in S1, respect `prefers-color-scheme` by default, add the visible toggle only when a real user need surfaces.
 
 Total interactive JS shipped to the client: **< 5 KB gz combined**.
 
@@ -144,7 +191,7 @@ Total interactive JS shipped to the client: **< 5 KB gz combined**.
 
 Diátaxis remains the underlying classifier (frontmatter + CI lint enforced). The sidebar groups by user intent, not quadrant name.
 
-URL convention preserved: all routes stay under `/docs/*`. Root `/` becomes a real landing page (hero + three cards: Get Started, Concepts, Reference) instead of "Hello World."
+URL convention preserved: all routes stay under `/docs/*`. Root `/` becomes a real landing page: Instrument Serif H1 + one-sentence lead + one primary CTA to `/docs/get-started/install`, over a single content column. **No card grid** (the 3-card layout is the most recognizable AI-slop pattern). Secondary nav links to Concepts and Reference are inline below the CTA.
 
 ## MCP-specific affordances
 
@@ -201,15 +248,20 @@ Per slice, dispatch parallel work to subagents:
 - Fumadocs build coexists in main only until S7.
 - S7 PR: delete `next.config.mjs`, `source.config.ts`, `proxy.ts`, `fumadocs-*` deps, `src/app/` (Next-specific routes), add `astro.config.ts`, swap `wrangler.toml` to Astro's Cloudflare adapter output.
 - All `/docs/*` URLs are path-stable; the existing `/` redirect to `/docs/get-started` is replaced by a real homepage. No redirects needed.
-- Rollback: revert the cut-over PR; Fumadocs build returns. Preview branch URLs of Astro remain accessible until cleaned up.
+- Rollback: revert the cut-over PR **and** re-run the Cloudflare deploy from the reverted commit. (The cut-over PR swaps `wrangler.toml`, so a code-only revert leaves the Worker pointing at a non-existent build output.) Keep the prior `.open-next` build artifact tagged for fast re-promotion. Preview branch URLs of Astro remain accessible until cleaned up.
 
 ## Testing strategy
 
-- **Unit (Vitest)**: pure-TS modules — `nav.ts`, `toc.ts`, `llms.ts`, frontmatter validators, `mcp-tools.json` schema.
+- **Unit (Vitest)**: pure-TS modules — `nav.ts`, `toc.ts`, `llms.ts`, frontmatter validators, `mcp-tools.json` schema, `_order.json` conflict rules.
 - **Component (Playwright)**: per-component story-style rendering with snapshot.
-- **End-to-end (Playwright)**: full happy-path walks of Get Started, Guide page, MCP tool reference page, Search, Theme toggle, Feedback submission.
-- **AI surface (verification script)**: a small Node script fetches `/llms.txt`, picks a known fact, sends it to Claude via Anthropic SDK with the fact's source paragraph from `/llms-full.txt`, asserts the answer is correct.
-- **Visual regression**: Playwright snapshots for each page type in both dark and light modes.
+- **End-to-end (Playwright)**: happy-path walks of Get Started, a Guide page, an MCP tool reference page, ⌘K Search, and `OpenInClaude` deep link.
+- **AI surface**:
+  (a) JSON-schema test for `/mcp/tools.json` — Zod parse and round-trip equality against `content/mcp-tools.json`;
+  (b) text-equivalence test asserting `/docs/<slug>.md` plain text matches the rendered HTML's `textContent` modulo whitespace, for every page;
+  (c) Anthropic SDK answer-correctness test on **3 known facts** AND **1 negative** ("fact not in corpus → model declines / says unknown");
+  (d) `/llms.txt` listing equals the Content Collection's published-status entries.
+- **Accessibility**: axe-core in Playwright; `AgentTranscript`, `McpToolCard`, sidebar, TOC, search modal must pass with zero violations.
+- **Visual regression**: Playwright snapshots for each page type in both color schemes. Snapshot budget: ≤ 30 snapshots total to keep CI < 60 s; do not snapshot every page × every viewport.
 
 ## Acceptance (definition of done)
 
@@ -230,6 +282,23 @@ Per slice, dispatch parallel work to subagents:
 - *React or no React?* → No React. Astro components + vanilla TS islands.
 - *Custom search infra?* → Pagefind. Static, ~30 KB client, zero infra.
 - *"Try it now" for MCP?* → `OpenInClaude` deep link + clipboard fallback + `AgentTranscript` for read-only flows.
+
+## AI-slop kills (applied this revision)
+
+Items the design review flagged as decorative-only. Removed or deferred:
+
+1. **Homepage card grid** — killed. Replaced with single CTA over single column. The 3-card "Get Started / Concepts / Reference" grid is the most recognizable AI-slop layout.
+2. **`FeedbackWidget` on every page** — deferred to post-S6. PostHog page-view + scroll depth covers 80% of the signal without spending user attention.
+3. **Visible `ThemeToggle`** — deferred. Ship the dark/light token system in S1, respect `prefers-color-scheme` for now. Add the toggle only when a real user need surfaces.
+4. **Color-coded Diátaxis badges** — killed. Replaced with a single neutral eyebrow label. Color reserved for the status pill where it carries meaning.
+5. **Callout variants `info` and `success`** — banned. Three variants (`note`, `warning`, `danger`) cover the real use cases. `success` belongs in prose.
+
+## Known risks tracked (do not block S1)
+
+- **Snapshot explosion in visual regression**: capped at 30 total snapshots; do not snapshot every page × every viewport × both themes.
+- **PostHog late-load race for events fired in the first second**: queue events into a `window.__lessly_queue` and flush on PostHog ready. Applies whenever PostHog returns from deferral.
+- **CSP for `claude://` scheme**: explicitly allow in `Content-Security-Policy` or accept that Firefox blocks silently; document the latter as a Firefox-only limitation in the OpenInClaude reference.
+- **Pagefind on Cloudflare Workers `[assets]` routing**: S1 includes a 30-minute spike to verify `/pagefind/*` requests serve from `[assets]` and the Worker does not intercept them. Fallback: move Pagefind index to a subroute or use `@astrojs/cloudflare`'s static-asset mode.
 
 ## Out-of-scope follow-ups (not blocking)
 
