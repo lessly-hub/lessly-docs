@@ -20,8 +20,15 @@ interface Props {
 const { currentPath = '' } = Astro.props;
 const groups = await getNav();
 
+// Normalize to a single canonical form so the active-item test matches
+// regardless of whether the URL came in with or without a trailing slash.
+// Astro emits `/docs/<slug>/` for pages but nav items are stored without
+// the trailing slash; without this step every page renders with no
+// visible active state.
+const normalizedPath = currentPath.replace(/\/$/, '');
+
 const activeGroupId = (() => {
-  const match = currentPath.match(/^\/docs\/([^/]+)/);
+  const match = normalizedPath.match(/^\/docs\/([^/]+)/);
   return match ? match[1] : '';
 })();
 
@@ -73,7 +80,7 @@ const statusPillStyles: Record<NavStatus, string> = {
             hidden={!isActiveGroup}
           >
             {group.items.map((item) => {
-              const active = currentPath === item.href;
+              const active = normalizedPath === item.href;
               return (
                 <li>
                   <a

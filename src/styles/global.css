@@ -365,11 +365,31 @@ body {
 
 .prose code {
   background-color: var(--color-bg-elevated);
-  color: var(--color-brand-bright);
+  /* Inline code reads as body text per brand-tokens.md. Earlier rev used
+   * brand-bright; that drift made inline code look like a link. */
+  color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
+}
+
+/* `.prose a code` keeps the link color so anchored inline code reads
+ * as a link, not as plain code accidentally inside a link. */
+.prose a code {
+  color: inherit;
+}
+
+/* Shiki-tokenized code blocks live inside <figure class="lessly-code">.
+ * The Astro fenced-block transformer wraps every <pre> in that figure.
+ * We do NOT want the legacy .prose pre rules to apply on top — Shiki
+ * owns the border/radius/overflow contract. */
+.prose figure.lessly-code pre,
+.prose figure.lessly-code code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
 }
 
 .prose pre {
