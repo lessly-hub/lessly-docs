@@ -69,7 +69,7 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
 >
   {(showFilenamePill || showLangPill || showCopyButton) && (
     <header
-      class="flex h-9 items-center justify-between border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-sunken)] px-3 text-xs text-[var(--color-text-tertiary)]"
+      class="flex h-9 items-center justify-between border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-sunken)] px-4 text-xs text-[var(--color-text-tertiary)]"
     >
       <div class="flex min-w-0 items-center gap-2">
         {showFilenamePill && (
@@ -110,7 +110,7 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
 <style is:global>
   .lessly-code pre.shiki {
     margin: 0;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     background-color: var(--color-bg-elevated) !important;
     color: var(--shiki-github-dark) !important;
     font-family: var(--font-mono);
@@ -159,17 +159,17 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
   }
   .lessly-code .code-line--highlighted {
     background-color: color-mix(in srgb, var(--color-brand-bright) 14%, transparent);
-    margin: 0 -1rem;
-    padding: 0 1rem;
+    margin: 0 -1.25rem;
+    padding: 0 1.25rem;
     border-left: 2px solid var(--color-brand-bright);
-    padding-left: calc(1rem - 2px);
+    padding-left: calc(1.25rem - 2px);
   }
   /* Diff variant tints from @shikijs/transformers notation. */
   .lessly-code--diff .code-line.diff.add,
   .lessly-code--diff .code-line.diff.remove {
-    margin: 0 -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
     position: relative;
   }
   .lessly-code--diff .code-line.diff.add {
