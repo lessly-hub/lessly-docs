@@ -5,17 +5,17 @@
  * Fetches /mcp/tools.json from a running site and validates two things:
  *  1. The served body parses against the same Zod schema the Astro build
  *     uses (re-implemented inline; the canonical source lives in
- *     astro/src/lib/mcp-tools.ts and the existing test-mcp-tools.mjs).
+ *     src/lib/mcp-tools.ts and the existing test-mcp-tools.mjs).
  *  2. The served body is deep-equal to the local content/mcp-tools.json.
  *
  * Usage:
- *   node astro/scripts/verify-ai/mcp-tools-schema.mjs --base http://localhost:8787
+ *   node scripts/verify-ai/mcp-tools-schema.mjs --base http://localhost:8787
  *
  * Exit 0 on success, non-zero with a clear message on failure.
  *
- * Note: we do not statically import astro/src/lib/mcp-tools.ts here because
+ * Note: we do not statically import src/lib/mcp-tools.ts here because
  * that module imports from 'astro/zod' inside the Astro runtime. The schema
- * is replicated 1:1 below; astro/scripts/test-mcp-tools.mjs is the canary
+ * is replicated 1:1 below; scripts/test-mcp-tools.mjs is the canary
  * if the two ever drift (and that script is run from `verify:ai` too).
  */
 import { readFileSync } from 'node:fs';

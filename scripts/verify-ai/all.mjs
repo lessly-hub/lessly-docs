@@ -10,8 +10,8 @@
  * rather than PASS in the summary.
  *
  * Usage:
- *   node astro/scripts/verify-ai/all.mjs --base http://localhost:8787
- *   pnpm --filter lessly-docs-astro verify:ai
+ *   node scripts/verify-ai/all.mjs --base http://localhost:8787
+ *   pnpm verify:ai
  */
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';

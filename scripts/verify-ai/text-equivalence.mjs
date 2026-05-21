@@ -30,7 +30,7 @@
  * /llms.txt so it can run against any deploy (preview, local, prod).
  *
  * Usage:
- *   node astro/scripts/verify-ai/text-equivalence.mjs --base http://localhost:8787
+ *   node scripts/verify-ai/text-equivalence.mjs --base http://localhost:8787
  *
  * Per-page failures are aggregated; the script exits non-zero if any
  * page falls below threshold, OR if the markdown endpoint is missing

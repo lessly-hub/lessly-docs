@@ -15,7 +15,7 @@
  * output so the human reader knows which source was used.
  *
  * Usage:
- *   node astro/scripts/verify-ai/llms-listing.mjs --base http://localhost:8787
+ *   node scripts/verify-ai/llms-listing.mjs --base http://localhost:8787
  */
 import { readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -39,7 +39,7 @@ if (sitemapRes.ok) {
   source = `/sitemap.xml (${expected.size} doc URLs)`;
 } else {
   // Fallback: derive from disk. Matches the Astro Content Collection
-  // glob in astro/src/content.config.ts ('**/*.mdx' under content/docs).
+  // glob in src/content.config.ts ('**/*.mdx' under content/docs).
   // We exclude draft entries (frontmatter `draft: true`) the same way
   // src/lib/llms.ts would in a published state.
   expected = new Set(walkContentDocs(contentDir));

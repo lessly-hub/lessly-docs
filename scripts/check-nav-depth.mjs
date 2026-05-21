@@ -3,8 +3,8 @@
  * Nav-depth lint for the Astro rewrite (Slice 6).
  *
  * Spec rule (§Architecture): no MDX file may live more than 3 directories
- * deep under `astro/content/docs/`. `astro/content/docs/A/B/C.mdx` is OK
- * (depth 3), `astro/content/docs/A/B/C/D.mdx` is not (depth 4).
+ * deep under `content/docs/`. `content/docs/A/B/C.mdx` is OK
+ * (depth 3), `content/docs/A/B/C/D.mdx` is not (depth 4).
  *
  * Underscore-prefixed directories (`_fixtures/`, `_drafts/`) are excluded
  * because they don't ship to readers.

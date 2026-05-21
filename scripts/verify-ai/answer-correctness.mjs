@@ -32,7 +32,7 @@
  * ~/.anthropic/api_key (newline-trimmed).
  *
  * Usage:
- *   node astro/scripts/verify-ai/answer-correctness.mjs --base http://localhost:8787
+ *   node scripts/verify-ai/answer-correctness.mjs --base http://localhost:8787
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';

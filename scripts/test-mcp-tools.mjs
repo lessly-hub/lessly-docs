@@ -9,7 +9,7 @@
  *    of the original.
  * 4. Assert tool count = 8 (Slice 4 catalog spec).
  *
- * Run: `node astro/scripts/test-mcp-tools.mjs` from anywhere.
+ * Run: `node scripts/test-mcp-tools.mjs` from anywhere.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
