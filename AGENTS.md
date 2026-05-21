@@ -1,8 +1,10 @@
 # Agent instructions for docs.lessly.com
 
-This is the customer-facing documentation site for Lessly. Next.js + Fumadocs + Lessly design tokens. Deployed to https://docs.lessly.com via Cloudflare Pages (preview URLs gated by Cloudflare Access for team-only viewing).
+This is the customer-facing documentation site for Lessly. Astro 6 + a first-party docs engine (no Fumadocs, no Docusaurus, no Nextra). Deployed to https://docs.lessly.com via Cloudflare Workers (PR preview URLs gated by Cloudflare Access for team-only viewing).
 
 If you are an AI agent (Claude Code, Codex, Cursor, Gemini, Copilot) working in this repo, read this file in full before opening a PR.
+
+The full design and rationale live in [`docs/superpowers/specs/2026-05-21-docs-rewrite-design.md`](./docs/superpowers/specs/2026-05-21-docs-rewrite-design.md).
 
 ## The three load-bearing rules
 
@@ -11,7 +13,7 @@ If you are an AI agent (Claude Code, Codex, Cursor, Gemini, Copilot) working in 
 2. **"Dev Console" is an internal system. It NEVER appears in customer-facing content.**
 3. **No customer CLI exists today.** Lessly is consumed via (a) web sign-up at lessly.com and (b) the Lessly MCP server installed into the customer's AI agent (Claude Desktop, Cursor, VS Code, …). Do not document a CLI. Do not pretend one exists. **`MCP` is NOT banned** — it's the customer's install path and must be discussed plainly.
 
-The CI lint at `.github/workflows/lint-vocab.yml` enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rule 3 is enforced by review.
+The CI lint at `.github/workflows/ci.yml` (`lint` job) enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rule 3 is enforced by review.
 
 ## Choose a page type before writing
 
@@ -29,18 +31,27 @@ Templates live in `agents/new-docs-page.md`. The PR template asks for the page t
 ## Other rules
 
 - **Language:** English only.
-- **Brand:** Use Lessly design tokens. Never hardcode hex colors. See `theme.css` and the Lessly design system (https://github.com/lessly-hub/team-guidebook).
+- **Brand:** Use Lessly design tokens. Never hardcode hex colors. See `src/styles/global.css` and the Lessly design system (https://github.com/lessly-hub/team-guidebook).
 - **URL convention:** docs URLs are path-based (`/docs/*`). The current subdomain (`docs.lessly.com`) is a temporary host; future migration to `lessly.com/docs/*` preserves all paths. Don't introduce route changes that strip the `/docs/` prefix.
-- **Diagrams:** Hero diagrams in Figma (export to `public/diagrams/<page-slug>.svg`); inline diagrams in D2 (`.d2` files compiled at build time). No Mermaid unless the inline syntax is trivially better for a sequence diagram.
-- **PR workflow:** Branch → PR → Cloudflare Pages preview URL (Access-gated) → review by area DRI → merge. No direct pushes to main.
-- **CI:** Banned-vocab lint, nav-depth check (≤ 3), Lighthouse CLS ≤ 0.05, Playwright visual regression.
+- **Nav depth:** No MDX file more than 3 directories deep under `content/docs/`. Enforced by `scripts/check-nav-depth.mjs`.
+- **PR workflow:** Branch → PR → Cloudflare Workers preview URL (Access-gated) → review by area DRI → merge. No direct pushes to main.
+- **CI:** Banned-vocab lint, nav-depth check, typecheck (astro check + tsc), vitest unit suite, build (astro + pagefind + OG), link integrity, Playwright E2E + axe a11y, AI surface verification (llms.txt + per-page md/mdx + /mcp/tools.json), Lighthouse CLS budget. All gates must pass.
 - **Commit format:** Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). Title in English.
+
+## Verification commands
+
+```bash
+pnpm test               # vitest unit tests
+pnpm check:links        # internal link integrity (run after pnpm build)
+pnpm check:nav-depth    # depth lint for content/docs
+pnpm test:e2e           # Playwright happy-path + axe a11y
+pnpm verify:ai          # AI surface checks (needs a running preview server)
+```
 
 ## When in doubt
 
 - Page-type questions → `agents/new-docs-page.md`
 - PR review checklist → `agents/review-docs-pr.md`
-- How to make a diagram → `agents/diagram-system.md`
 - Brand tokens / typography → https://github.com/lessly-hub/team-guidebook (Lessly design system)
 - Bigger product / scoping questions → https://github.com/lessly-hub/lessly
 
