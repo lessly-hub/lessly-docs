@@ -35,15 +35,18 @@ const ogImage = ogSlug
   <head>
     <script is:inline>
       // Theme bootstrap. MUST run before any CSS to avoid flash.
-      // Precedence: localStorage('lessly-docs:theme') > prefers-color-scheme > dark default.
-      // Valid values: 'dark' | 'light'. Nothing in the UI sets this key today
-      // (visible ThemeToggle deferred per spec); set it via devtools to opt in.
+      // Precedence: lessly_theme cookie > local time (dark 19:00–06:59) > dark default.
+      // Mirror of src/lib/theme.ts — keep the two in sync.
       (function () {
         try {
-          var stored = localStorage.getItem('lessly-docs:theme');
-          var theme = stored === 'light' || stored === 'dark'
-            ? stored
-            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          var m = document.cookie.match(/(?:^|;\s*)lessly_theme=(dark|light)(?:;|$)/);
+          var theme;
+          if (m) {
+            theme = m[1];
+          } else {
+            var h = new Date().getHours();
+            theme = (h >= 19 || h < 7) ? 'dark' : 'light';
+          }
           if (theme === 'light') document.documentElement.classList.add('light');
         } catch (e) {}
       })();
