@@ -7,7 +7,6 @@ const docs = defineCollection({
     title: z.string(),
     description: z.string(),
     diataxis: z.enum(['tutorial', 'how-to', 'explanation', 'reference']),
-    status: z.enum(['alpha', 'beta', 'stable']).optional(),
     updated: z.date().optional(),
     draft: z.boolean().optional(),
   }),
