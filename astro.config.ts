@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, sessionDrivers } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,7 +11,7 @@ export default defineConfig({
   // Pin an explicit session driver so @astrojs/cloudflare does NOT auto-inject
   // a KV `SESSION` binding without an id (which blocks first deploy in CI's
   // non-interactive shell). Docs are stateless; in-memory is correct.
-  session: { driver: 'memory' },
+  session: { driver: sessionDrivers.lruCache() },
   adapter: cloudflare({
     imageService: 'compile',
   }),

@@ -24,7 +24,7 @@ export const mcpToolArgSchema = z.object({
 
 export const mcpToolExampleSchema = z.object({
   prompt: z.string().min(1),
-  args: z.record(z.unknown()),
+  args: z.record(z.string(), z.unknown()),
 });
 
 export const mcpToolSchema = z.object({

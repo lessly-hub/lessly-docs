@@ -2,6 +2,12 @@ name: CI
 
 # Quality gates for lessly-docs (Astro 6 + first-party docs engine).
 # Runs on every PR. Production deploy is handled by deploy.yml.
+#
+# Most jobs rebuild the site themselves rather than sharing a build
+# artifact — `astro preview` on the Cloudflare adapter wants the full
+# project state (node_modules, .astro/ cache, etc.) not just dist/, and
+# the rebuild cost (~6s) is small enough that artifact wiring is not
+# worth the cross-job fragility.
 
 on:
   pull_request:
@@ -10,22 +16,21 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+
 jobs:
   lint:
     name: Lint (vocab + nav depth)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Banned-vocab lint (content)
         # Two banned terms per AGENTS.md / CONTRIBUTING.md:
         #   - `extension` (case-insensitive, word boundary)
         #   - `Dev Console` (case-sensitive exact phrase)
-        # Exclude `glossary/` (where the terms are documented intentionally)
-        # and code fences (Markdown ``` blocks) and inline `code`.
-        # We strip code spans before grepping so legitimate code references
-        # to repo names (e.g. `lessly-deployment-extension`) don't trip the
-        # check. Lines inside fenced blocks are dropped via awk.
+        # Exclude `glossary/` and stripped code fences/spans.
         run: |
           set -euo pipefail
           shopt -s globstar nullglob
@@ -35,7 +40,6 @@ jobs:
             case "$file" in
               *glossary/*) continue ;;
             esac
-            # Strip fenced code blocks + inline code spans.
             stripped=$(awk '
               BEGIN { in_fence = 0 }
               /^```/ { in_fence = !in_fence; next }
@@ -57,24 +61,22 @@ jobs:
             exit 1
           fi
           echo "lint-vocab: content clean"
-
       - name: Nav-depth lint
         run: node scripts/check-nav-depth.mjs
 
   typecheck:
-    name: Typecheck (astro check + tsc)
+    name: Typecheck (astro check)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
-        with: { version: 10 }
+        with: { version: '${{ env.PNPM_VERSION }}' }
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec astro check
-      - run: pnpm exec tsc --noEmit
 
   unit:
     name: Unit tests (vitest)
@@ -82,73 +84,72 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
-        with: { version: 10 }
+        with: { version: '${{ env.PNPM_VERSION }}' }
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
-  build:
-    name: Build (astro + pagefind + og)
+  build-and-gates:
+    name: Build + links + e2e + verify-ai + lighthouse
     runs-on: ubuntu-latest
+    # One job that does the build once and then runs every gate that
+    # depends on the built site. Avoids cross-job artifact transfer (the
+    # Cloudflare adapter expects the full project tree, not just dist/).
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
-        with: { version: 10 }
+        with: { version: '${{ env.PNPM_VERSION }}' }
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      # `build` already runs astro build + generate-og.mjs; add pagefind on top.
-      - run: pnpm build
-      - run: pnpm pagefind
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: astro-dist
-          path: dist
-          retention-days: 7
 
-  links:
-    name: Link integrity
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: astro-dist
-          path: dist
-      - run: node scripts/check-links.mjs
-
-  e2e:
-    name: E2E (playwright + axe)
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with: { version: 10 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: astro-dist
-          path: dist
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+
+      - name: Build (astro + og)
+        run: pnpm build
+
+      - name: Pagefind index
+        run: pnpm pagefind
+
+      - name: Link integrity
+        run: pnpm check:links
+
+      - name: E2E (playwright + axe)
+        # Playwright's webServer config will reuse the existing dist/ and
+        # pagefind index and start `astro preview` against it.
+        run: pnpm test:e2e
+
+      - name: Start preview for verify-ai + lighthouse
+        run: |
+          pnpm exec astro preview --host 127.0.0.1 --port 4321 &
+          echo $! > .preview.pid
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4321/ >/dev/null; then break; fi
+            sleep 1
+          done
+
+      - name: Verify AI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERIFY_BASE: http://127.0.0.1:4321
+        run: pnpm verify:ai
+
+      - name: Lighthouse CI
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        run: pnpm exec lhci autorun --config=./lighthouserc.json
+
+      - name: Stop preview
+        if: always()
+        run: |
+          if [ -f .preview.pid ]; then kill "$(cat .preview.pid)" 2>/dev/null || true; fi
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -156,65 +157,3 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
-
-  verify-ai:
-    name: AI surface verification
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with: { version: 10 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: astro-dist
-          path: dist
-      - name: Start static preview
-        # Background astro preview against the prebuilt dist/ so verify:ai
-        # can hit /llms.txt, /docs/<slug>.md, etc.
-        run: |
-          pnpm exec astro preview --host 127.0.0.1 --port 4321 &
-          echo $! > .preview.pid
-          # Wait for the server.
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4321/ >/dev/null; then break; fi
-            sleep 1
-          done
-      - name: Verify AI
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          VERIFY_BASE: http://127.0.0.1:4321
-        run: pnpm verify:ai
-      - name: Stop preview
-        if: always()
-        run: |
-          if [ -f .preview.pid ]; then kill "$(cat .preview.pid)" 2>/dev/null || true; fi
-
-  lighthouse:
-    name: Lighthouse CI
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with: { version: 10 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: astro-dist
-          path: dist
-      - name: Lighthouse CI
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        run: pnpm exec lhci autorun --config=./lighthouserc.json

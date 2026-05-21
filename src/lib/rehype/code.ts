@@ -16,7 +16,7 @@
  */
 import { visit } from 'unist-util-visit';
 import { fromHtml } from 'hast-util-from-html';
-import type { Root, Element, Text, Parent, Node } from 'hast';
+import type { Root, Element, Text, Parent, Node, ElementContent } from 'hast';
 
 import { renderCodeHtml } from '../shiki/highlighter';
 
@@ -65,7 +65,7 @@ export function rehypeCodeBlock() {
     visit(tree, 'element', (node: Element, index, parent) => {
       if (node.tagName !== 'pre' || !parent || index == null) return;
       const codeEl = node.children.find(
-        (c) => isElement(c) && c.tagName === 'code',
+        (c: ElementContent) => isElement(c) && c.tagName === 'code',
       ) as Element | undefined;
       if (!codeEl) return;
       // Skip if this <pre> was already produced by our wrapper (idempotent).
