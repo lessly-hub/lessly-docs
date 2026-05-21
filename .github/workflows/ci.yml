@@ -1,23 +1,14 @@
-name: Astro CI
+name: CI
 
-# Quality gates for the Astro rewrite (Slice 6 — TESTS + CI).
-# Triggers on any PR that touches `astro/**` or this workflow itself.
-# The existing Next.js workflows (`lint.yml`, `lighthouse.yml`,
-# `cloudflare-pages.yml`) cover the legacy site and remain untouched.
+# Quality gates for lessly-docs (Astro 6 + first-party docs engine).
+# Runs on every PR. Production deploy is handled by deploy.yml.
 
 on:
   pull_request:
-    paths:
-      - 'astro/**'
-      - '.github/workflows/astro-ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-defaults:
-  run:
-    working-directory: astro
 
 jobs:
   lint:
@@ -26,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Banned-vocab lint (astro/content)
+      - name: Banned-vocab lint (content)
         # Two banned terms per AGENTS.md / CONTRIBUTING.md:
         #   - `extension` (case-insensitive, word boundary)
         #   - `Dev Console` (case-sensitive exact phrase)
@@ -65,7 +56,7 @@ jobs:
             echo "Banned vocabulary detected. See AGENTS.md."
             exit 1
           fi
-          echo "lint-vocab: astro/content clean"
+          echo "lint-vocab: content clean"
 
       - name: Nav-depth lint
         run: node scripts/check-nav-depth.mjs
@@ -81,7 +72,6 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec astro check
       - run: pnpm exec tsc --noEmit
@@ -97,7 +87,6 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
@@ -112,7 +101,6 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       # `build` already runs astro build + generate-og.mjs; add pagefind on top.
       - run: pnpm build
@@ -121,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: astro-dist
-          path: astro/dist
+          path: dist
           retention-days: 7
 
   links:
@@ -137,7 +125,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: astro-dist
-          path: astro/dist
+          path: dist
       - run: node scripts/check-links.mjs
 
   e2e:
@@ -152,13 +140,12 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
           name: astro-dist
-          path: astro/dist
+          path: dist
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
@@ -167,7 +154,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: astro/playwright-report
+          path: playwright-report
           retention-days: 7
 
   verify-ai:
@@ -182,13 +169,12 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
           name: astro-dist
-          path: astro/dist
+          path: dist
       - name: Start static preview
         # Background astro preview against the prebuilt dist/ so verify:ai
         # can hit /llms.txt, /docs/<slug>.md, etc.
@@ -222,13 +208,12 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: astro/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
           name: astro-dist
-          path: astro/dist
+          path: dist
       - name: Lighthouse CI
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
