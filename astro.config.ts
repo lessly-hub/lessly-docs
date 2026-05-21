@@ -8,6 +8,10 @@ import rehypeCodeBlock from './src/lib/rehype/code';
 export default defineConfig({
   site: 'https://docs.lessly.com',
   output: 'static',
+  // Pin an explicit session driver so @astrojs/cloudflare does NOT auto-inject
+  // a KV `SESSION` binding without an id (which blocks first deploy in CI's
+  // non-interactive shell). Docs are stateless; in-memory is correct.
+  session: { driver: 'memory' },
   adapter: cloudflare({
     imageService: 'compile',
   }),

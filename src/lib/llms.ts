@@ -103,8 +103,8 @@ function stripCallouts(s: string): string {
 }
 
 function stripCodeBlock(s: string): string {
-  // Self-closing <CodeBlock ... /> with `code={...}` or `code="..."` plus `lang`.
-  return s.replace(
+  // Self-closing form: <CodeBlock lang="..." code="..." />
+  s = s.replace(
     /<CodeBlock([^/>]*?)\/>/g,
     (_match, attrs: string) => {
       const lang = attrFrom(attrs, 'lang') ?? '';
@@ -112,6 +112,16 @@ function stripCodeBlock(s: string): string {
       return ['```' + lang, code, '```'].join('\n');
     },
   );
+  // Block form: <CodeBlock lang="...">…inner code…</CodeBlock>
+  // (Used when code contains characters that don't survive a JSX attribute.)
+  s = s.replace(
+    /<CodeBlock([^>]*?)>([\s\S]*?)<\/CodeBlock>/g,
+    (_match, attrs: string, inner: string) => {
+      const lang = attrFrom(attrs, 'lang') ?? '';
+      return ['```' + lang, inner.trim(), '```'].join('\n');
+    },
+  );
+  return s;
 }
 
 function stripOpenInClaude(s: string): string {
@@ -125,9 +135,9 @@ function stripOpenInClaude(s: string): string {
 }
 
 function stripMcpToolCard(s: string): string {
-  // <McpToolCard tool={{ ... }} />  — flatten to a markdown card.
-  return s.replace(
-    /<McpToolCard\s+tool=\{([\s\S]*?)\}\s*\/>/g,
+  // Literal object form: <McpToolCard tool={{ name: 'x', ... }} />
+  s = s.replace(
+    /<McpToolCard\s+tool=\{\{([\s\S]*?)\}\}\s*\/>/g,
     (_m, inner: string) => {
       const name = pluckObjectField(inner, 'name') ?? 'tool';
       const summary = pluckObjectField(inner, 'summary') ?? '';
@@ -138,6 +148,19 @@ function stripMcpToolCard(s: string): string {
       return parts.join('\n\n');
     },
   );
+  // Fallback: any other <McpToolCard ... /> shape (e.g. helper-resolved
+  // `tool={getMcpTool('lessly_deploy')}`). Render a neutral placeholder line
+  // so raw JSX never leaks into /llms-full.txt or /docs/<slug>.md.
+  s = s.replace(
+    /<McpToolCard\b[^>]*\/>/g,
+    '_MCP tool card._',
+  );
+  // Block form, defensive: <McpToolCard …>…</McpToolCard>
+  s = s.replace(
+    /<McpToolCard\b[\s\S]*?<\/McpToolCard>/g,
+    '_MCP tool card._',
+  );
+  return s;
 }
 
 function stripTabs(s: string): string {

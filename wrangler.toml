@@ -1,7 +1,16 @@
-name = "lessly-docs-astro"
+name = "lessly-docs"
 compatibility_date = "2026-05-21"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
+
+# Pinned route — must match the production Worker name above. Without this,
+# `docs.lessly.com` would silently keep routing to the previous Worker on
+# first deploy of the rewrite. Spec §Rollout: "production promoted to
+# docs.lessly.com".
+[[routes]]
+pattern = "docs.lessly.com"
+custom_domain = true
+zone_name = "lessly.com"
 
 # Astro Cloudflare adapter (`output: 'static'`) emits its own resolved config at
 # `dist/server/wrangler.json` during `astro build`. To preview or deploy, use

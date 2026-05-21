@@ -4,15 +4,22 @@
  * the reader's local Claude.
  *
  * Click handler (spec §MCP-specific affordances):
- *   1. Try `claude://run?tool=<toolName>&args=<urlencoded JSON>`.
- *   2. On failure OR after 800ms (no scheme handler registered),
- *      fall back to copying the verbatim prompt to clipboard:
+ *   1. ALWAYS copy the verbatim prompt to clipboard — guaranteed
+ *      second action that survives any deep-link failure path:
  *        "Run the {toolName} MCP tool with: {exampleArgs}"
- *   3. After copy, button label swaps to "Copied — paste into Claude"
- *      for 2s, then restores.
+ *   2. THEN try `claude://run?tool=<toolName>&args=<urlencoded JSON>`
+ *      in a hidden iframe. If the scheme is registered, the OS hands
+ *      off to Claude; if not, nothing happens and the user has the
+ *      clipboard as a fallback.
+ *   3. Button label swaps to "Copied — paste into Claude" for 2s, then
+ *      restores. The user always sees a result.
  *
- * Firefox may block `claude://` silently — documented as a known
- * limitation in the OpenInClaude reference page.
+ * Earlier revisions used a window `blur` listener as a "scheme handler
+ * took over" signal. Removed — alt-tabbing, devtools focus, or any
+ * notification within 800ms produced a false positive: deep link didn't
+ * fire AND clipboard was suppressed, leaving the user with no feedback.
+ * Firefox may still block `claude://` silently — that's now harmless
+ * because clipboard already succeeded.
  */
 import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs';
 import { renderIcon, type LucideIcon } from '@/lib/icon';
@@ -64,7 +71,7 @@ const iconSvg = renderIcon(ExternalLink as unknown as LucideIcon, {
     const copiedLabel = button.dataset.copiedLabel ?? 'Copied — paste into Claude';
     const labelEl = button.querySelector<HTMLElement>('.lessly-open-in-claude__label');
 
-    async function fallbackCopy() {
+    async function copyToClipboard() {
       try {
         await navigator.clipboard.writeText(clipboardText);
         if (labelEl) {
@@ -74,38 +81,27 @@ const iconSvg = renderIcon(ExternalLink as unknown as LucideIcon, {
           }, 2000);
         }
       } catch {
-        /* user can copy from the page if all else fails */
+        /* user can copy from the page text if clipboard API is unavailable */
       }
     }
 
-    button.addEventListener('click', () => {
-      let handled = false;
-      const start = Date.now();
-
-      // Watch the page visibility / blur as a signal that the scheme handler
-      // took over. If we lose focus within 800ms, assume the deep link
-      // worked. Otherwise fall back to clipboard.
-      const onBlur = () => { handled = true; };
-      window.addEventListener('blur', onBlur, { once: true });
+    button.addEventListener('click', async () => {
+      // Copy first — guaranteed feedback path. If the scheme handler ALSO
+      // launches Claude, great; if not, the user has the prompt on
+      // clipboard and the button says so.
+      await copyToClipboard();
 
       try {
-        // Use a hidden iframe to avoid full navigation in browsers that
-        // don't register the scheme (avoids "page failed to load" errors).
+        // Hidden iframe avoids a full-navigation error when the scheme
+        // is not registered.
         const frame = document.createElement('iframe');
         frame.style.display = 'none';
         frame.src = deepLink;
         document.body.appendChild(frame);
         window.setTimeout(() => frame.remove(), 1000);
       } catch {
-        handled = false;
+        /* deep link is best-effort; clipboard already succeeded */
       }
-
-      window.setTimeout(() => {
-        window.removeEventListener('blur', onBlur);
-        if (!handled && Date.now() - start >= 800) {
-          fallbackCopy();
-        }
-      }, 800);
     });
   }
 
