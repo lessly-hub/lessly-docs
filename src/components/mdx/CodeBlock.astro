@@ -1,0 +1,259 @@
+---
+/**
+ * CodeBlock — pre-tokenized Shiki code block.
+ *
+ * Server-side: tokenizes `code` at build time via the shared highlighter
+ * (`@/lib/shiki/highlighter`). Emits dual themes (`github-dark` default +
+ * `github-light` under `.light`).
+ *
+ * Variants:
+ *   - `default`  — language pill + filename pill + copy button.
+ *   - `diff`     — `+` green tint, `-` red tint, NO language pill.
+ *   - `terminal` — `$` prompt dimmed, NO copy button, NO filename pill.
+ *
+ * Highlights: `highlightLines="1,3-5"` → those lines get a brand-subtle wash.
+ * Line numbers: `showLineNumbers` (default false).
+ *
+ * Long lines: horizontal scroll, no wrap (spec §Component contracts).
+ */
+import Copy from 'lucide/dist/esm/icons/copy.mjs';
+import Check from 'lucide/dist/esm/icons/check.mjs';
+import { renderIcon, type LucideIcon } from '@/lib/icon';
+import { renderCodeHtml } from '@/lib/shiki/highlighter';
+
+interface Props {
+  code: string;
+  lang?: string;
+  filename?: string;
+  highlightLines?: string;
+  showLineNumbers?: boolean;
+  variant?: 'default' | 'diff' | 'terminal';
+}
+
+const {
+  code,
+  lang = 'text',
+  filename,
+  highlightLines,
+  showLineNumbers = false,
+  variant = 'default',
+} = Astro.props;
+
+const html = renderCodeHtml({
+  code,
+  lang,
+  variant,
+  highlightLines,
+  showLineNumbers,
+});
+
+const showLangPill = variant === 'default' && lang && lang !== 'text';
+const showFilenamePill = variant !== 'terminal' && Boolean(filename);
+const showCopyButton = variant !== 'terminal';
+
+const copyIcon = renderIcon(Copy as unknown as LucideIcon, {
+  size: 14,
+  class: 'lessly-code__icon-copy',
+});
+const checkIcon = renderIcon(Check as unknown as LucideIcon, {
+  size: 14,
+  class: 'lessly-code__icon-check hidden',
+});
+---
+
+<figure
+  class:list={[
+    'lessly-code group relative my-6 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)]',
+    `lessly-code--${variant}`,
+  ]}
+>
+  {(showFilenamePill || showLangPill || showCopyButton) && (
+    <header
+      class="flex h-9 items-center justify-between border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-sunken)] px-3 text-xs text-[var(--color-text-tertiary)]"
+    >
+      <div class="flex min-w-0 items-center gap-2">
+        {showFilenamePill && (
+          <span
+            class="truncate font-mono text-[0.75rem] text-[var(--color-text-secondary)]"
+          >
+            {filename}
+          </span>
+        )}
+        {showLangPill && (
+          <span
+            class="rounded-sm bg-[var(--color-bg-surface)] px-1.5 py-0.5 font-mono text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-tertiary)]"
+          >
+            {lang}
+          </span>
+        )}
+      </div>
+      {showCopyButton && (
+        <button
+          type="button"
+          class="lessly-code__copy flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-bright)]"
+          data-copy-label="Copy"
+          data-copied-label="Copied"
+          aria-label="Copy code to clipboard"
+        >
+          <span class="lessly-code__icon" set:html={copyIcon} />
+          <span class="lessly-code__icon" set:html={checkIcon} />
+          <span class="lessly-code__copy-label">Copy</span>
+        </button>
+      )}
+    </header>
+  )}
+  <div class="lessly-code__scroll overflow-x-auto" set:html={html} />
+  {/* Raw source for the copy button — never rendered. */}
+  <template class="lessly-code__source">{code}</template>
+</figure>
+
+<style is:global>
+  .lessly-code pre.shiki {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-bg-elevated) !important;
+    color: var(--shiki-github-dark) !important;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+  .light .lessly-code pre.shiki {
+    color: var(--shiki-github-light) !important;
+  }
+  .lessly-code pre.shiki code {
+    display: block;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
+  }
+  .lessly-code .code-line {
+    display: block;
+    color: var(--shiki-github-dark);
+  }
+  .light .lessly-code .code-line {
+    color: var(--shiki-github-light);
+  }
+  .lessly-code .code-line .line,
+  .lessly-code pre.shiki span {
+    color: var(--shiki-github-dark);
+  }
+  .light .lessly-code pre.shiki span {
+    color: var(--shiki-github-light);
+  }
+  .lessly-code .code-line {
+    background-color: color-mix(in srgb, var(--shiki-github-dark-bg, transparent) 0%, transparent);
+  }
+  .lessly-code pre.shiki {
+    background-color: var(--shiki-github-dark-bg, var(--color-bg-elevated)) !important;
+  }
+  .light .lessly-code pre.shiki {
+    background-color: var(--shiki-github-light-bg, var(--color-bg-elevated)) !important;
+  }
+  .lessly-code .code-line--highlighted {
+    background-color: color-mix(in srgb, var(--color-brand-bright) 14%, transparent);
+    margin: 0 -1rem;
+    padding: 0 1rem;
+    border-left: 2px solid var(--color-brand-bright);
+    padding-left: calc(1rem - 2px);
+  }
+  /* Diff variant tints from @shikijs/transformers notation. */
+  .lessly-code--diff .code-line.diff.add,
+  .lessly-code--diff .code-line.diff.remove {
+    margin: 0 -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    position: relative;
+  }
+  .lessly-code--diff .code-line.diff.add {
+    background-color: color-mix(in srgb, var(--color-text-success) 12%, transparent);
+  }
+  .lessly-code--diff .code-line.diff.remove {
+    background-color: color-mix(in srgb, var(--color-text-danger) 12%, transparent);
+  }
+  .lessly-code--diff .code-line.diff.add::before {
+    content: '+';
+    color: var(--color-text-success);
+    margin-right: 0.5rem;
+  }
+  .lessly-code--diff .code-line.diff.remove::before {
+    content: '-';
+    color: var(--color-text-danger);
+    margin-right: 0.5rem;
+  }
+  /* Terminal variant — dim prompt char. We post-process via CSS: any line that
+     starts with `$` is rendered by Shiki as just text; readers see prompt
+     dimming via the `:first-child` trick on each line span. */
+  .lessly-code--terminal .code-line::first-letter {
+    /* When the first character is `$` Shiki gives it text color. We dim it.
+       This is best-effort — proper dimming would require a transformer. */
+    color: var(--color-text-tertiary);
+  }
+  /* Line numbers */
+  .lessly-code .shiki-pre--numbered {
+    counter-reset: code-line;
+  }
+  .lessly-code .shiki-pre--numbered .code-line {
+    counter-increment: code-line;
+  }
+  .lessly-code .shiki-pre--numbered .code-line::before {
+    content: counter(code-line);
+    display: inline-block;
+    width: 2rem;
+    margin-right: 1rem;
+    text-align: right;
+    color: var(--color-text-tertiary);
+    user-select: none;
+  }
+  .lessly-code .lessly-code__icon-check.hidden {
+    display: none;
+  }
+  .lessly-code .lessly-code__icon {
+    display: inline-flex;
+  }
+  .lessly-code template.lessly-code__source {
+    display: none;
+  }
+</style>
+
+<script>
+  // Vanilla TS — ~20 lines, no framework. Wires up every CodeBlock on the page.
+  function wireCopyButtons() {
+    const blocks = document.querySelectorAll<HTMLElement>('.lessly-code');
+    blocks.forEach((block) => {
+      const button = block.querySelector<HTMLButtonElement>('.lessly-code__copy');
+      const source = block.querySelector<HTMLTemplateElement>('template.lessly-code__source');
+      if (!button || !source || button.dataset.wired === '1') return;
+      button.dataset.wired = '1';
+      const copyIcon = button.querySelector<HTMLElement>('.lessly-code__icon-copy')?.parentElement;
+      const checkIcon = button.querySelector<HTMLElement>('.lessly-code__icon-check')?.parentElement;
+      const label = button.querySelector<HTMLElement>('.lessly-code__copy-label');
+      const copiedLabel = button.dataset.copiedLabel ?? 'Copied';
+      const copyLabel = button.dataset.copyLabel ?? 'Copy';
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(source.innerHTML);
+          if (label) label.textContent = copiedLabel;
+          if (copyIcon) copyIcon.classList.add('hidden');
+          if (checkIcon) checkIcon.classList.remove('hidden');
+          window.setTimeout(() => {
+            if (label) label.textContent = copyLabel;
+            if (copyIcon) copyIcon.classList.remove('hidden');
+            if (checkIcon) checkIcon.classList.add('hidden');
+          }, 2000);
+        } catch {
+          /* clipboard unavailable */
+        }
+      });
+    });
+  }
+  wireCopyButtons();
+  document.addEventListener('astro:page-load', wireCopyButtons);
+</script>

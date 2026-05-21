@@ -1,0 +1,159 @@
+---
+/**
+ * Tabs — agent-variant switcher (Claude Desktop / Claude Code / Cursor / …).
+ *
+ * State precedence (spec §Component contracts):
+ *   1. URL `?tab=<value>` query param.
+ *   2. localStorage key `lessly-docs:tab:<id>`.
+ *   3. `defaultTab` prop.
+ *   4. First tab in the rendered order.
+ *
+ * URL wins so deep links land on the intended variant. The tab strip is
+ * built client-side from the panels' `data-tab-value` / `data-tab-label`
+ * attributes — keeps the MDX authoring surface minimal (`<Tab value="…">`
+ * with prose inside).
+ *
+ * Total client JS: ~40 lines.
+ */
+let __tabsCounter = 0;
+function nextId(): string {
+  return `tabs-${++__tabsCounter}`;
+}
+
+interface Props {
+  id?: string;
+  defaultTab?: string;
+}
+
+const { id = nextId(), defaultTab } = Astro.props;
+---
+
+<div
+  class="lessly-tabs my-6"
+  data-tabs-id={id}
+  data-default-tab={defaultTab ?? ''}
+>
+  <div
+    class="lessly-tabs__strip mb-4 flex items-center gap-1 overflow-x-auto border-b border-[var(--color-border-subtle)]"
+    role="tablist"
+  >
+    {/* Tab buttons injected here by the inline script. */}
+  </div>
+  <div class="lessly-tabs__panels">
+    <slot />
+  </div>
+</div>
+
+<style is:global>
+  .lessly-tabs__panel.hidden {
+    display: none;
+  }
+  .lessly-tabs__panel > :first-child {
+    margin-top: 0;
+  }
+  .lessly-tabs__panel > :last-child {
+    margin-bottom: 0;
+  }
+  .lessly-tabs__tab {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    padding: 0.5rem 0.875rem;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .lessly-tabs__tab:hover {
+    color: var(--color-text-primary);
+  }
+  .lessly-tabs__tab[aria-selected='true'] {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-brand-bright);
+  }
+  .lessly-tabs__tab:focus-visible {
+    outline: 2px solid var(--color-brand-bright);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+</style>
+
+<script>
+  type TabsRoot = HTMLElement;
+
+  function wireTabs(root: TabsRoot) {
+    if (root.dataset.wired === '1') return;
+    root.dataset.wired = '1';
+    const id = root.dataset.tabsId ?? 'tabs';
+    const defaultTab = root.dataset.defaultTab || undefined;
+    const panels = Array.from(
+      root.querySelectorAll<HTMLElement>('.lessly-tabs__panel'),
+    );
+    if (panels.length === 0) return;
+    const strip = root.querySelector<HTMLElement>('.lessly-tabs__strip');
+    if (!strip) return;
+
+    const values = panels.map((p) => p.dataset.tabValue ?? '');
+    const labels = panels.map((p) => p.dataset.tabLabel ?? p.dataset.tabValue ?? '');
+
+    // Resolve initial active tab: URL > localStorage > defaultTab > first.
+    const url = new URL(window.location.href);
+    const urlValue = url.searchParams.get('tab');
+    const storageKey = `lessly-docs:tab:${id}`;
+    const storedValue = (() => {
+      try { return window.localStorage.getItem(storageKey); } catch { return null; }
+    })();
+    const initial =
+      (urlValue && values.includes(urlValue) && urlValue) ||
+      (storedValue && values.includes(storedValue) && storedValue) ||
+      (defaultTab && values.includes(defaultTab) && defaultTab) ||
+      values[0];
+
+    // Build tab buttons.
+    values.forEach((value, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lessly-tabs__tab';
+      btn.role = 'tab';
+      btn.id = `${id}-tab-${value}`;
+      btn.textContent = labels[i];
+      btn.dataset.tabValue = value;
+      btn.setAttribute('aria-controls', `${id}-panel-${value}`);
+      btn.addEventListener('click', () => activate(value, true));
+      strip.appendChild(btn);
+    });
+
+    panels.forEach((panel) => {
+      const v = panel.dataset.tabValue ?? '';
+      panel.id = `${id}-panel-${v}`;
+      panel.setAttribute('aria-labelledby', `${id}-tab-${v}`);
+    });
+
+    function activate(value: string, persist: boolean) {
+      panels.forEach((p) => {
+        const match = p.dataset.tabValue === value;
+        p.classList.toggle('hidden', !match);
+      });
+      strip!.querySelectorAll<HTMLButtonElement>('.lessly-tabs__tab').forEach((b) => {
+        const match = b.dataset.tabValue === value;
+        b.setAttribute('aria-selected', match ? 'true' : 'false');
+        b.tabIndex = match ? 0 : -1;
+      });
+      if (persist) {
+        try { window.localStorage.setItem(storageKey, value); } catch {}
+      }
+    }
+
+    activate(initial, false);
+  }
+
+  function wireAll() {
+    document.querySelectorAll<HTMLElement>('.lessly-tabs').forEach(wireTabs);
+  }
+  wireAll();
+  document.addEventListener('astro:page-load', wireAll);
+</script>

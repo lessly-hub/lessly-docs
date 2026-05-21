@@ -1,0 +1,10 @@
+{
+  "order": ["get-started", "guides", "concepts", "reference", "changelog"],
+  "labels": {
+    "get-started": "Get Started",
+    "guides": "Guides",
+    "concepts": "Concepts",
+    "reference": "Reference",
+    "changelog": "Changelog"
+  }
+}

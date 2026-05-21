@@ -1,0 +1,115 @@
+---
+/**
+ * OpenInClaude — primary CTA that hands a Lessly MCP tool invocation to
+ * the reader's local Claude.
+ *
+ * Click handler (spec §MCP-specific affordances):
+ *   1. ALWAYS copy the verbatim prompt to clipboard — guaranteed
+ *      second action that survives any deep-link failure path:
+ *        "Run the {toolName} MCP tool with: {exampleArgs}"
+ *   2. THEN try `claude://run?tool=<toolName>&args=<urlencoded JSON>`
+ *      in a hidden iframe. If the scheme is registered, the OS hands
+ *      off to Claude; if not, nothing happens and the user has the
+ *      clipboard as a fallback.
+ *   3. Button label swaps to "Copied — paste into Claude" for 2s, then
+ *      restores. The user always sees a result.
+ *
+ * Earlier revisions used a window `blur` listener as a "scheme handler
+ * took over" signal. Removed — alt-tabbing, devtools focus, or any
+ * notification within 800ms produced a false positive: deep link didn't
+ * fire AND clipboard was suppressed, leaving the user with no feedback.
+ * Firefox may still block `claude://` silently — that's now harmless
+ * because clipboard already succeeded.
+ */
+import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs';
+import { renderIcon, type LucideIcon } from '@/lib/icon';
+
+interface Props {
+  toolName: string;
+  exampleArgs: string | Record<string, unknown>;
+  label?: string;
+}
+
+const { toolName, exampleArgs, label = 'Open in Claude' } = Astro.props;
+
+const argsString =
+  typeof exampleArgs === 'string'
+    ? exampleArgs
+    : JSON.stringify(exampleArgs);
+
+const clipboardText = `Run the ${toolName} MCP tool with: ${argsString}`;
+const deepLink = `claude://run?tool=${encodeURIComponent(
+  toolName,
+)}&args=${encodeURIComponent(argsString)}`;
+
+const iconSvg = renderIcon(ExternalLink as unknown as LucideIcon, {
+  size: 14,
+  class: 'lessly-open-in-claude__icon',
+});
+---
+
+<button
+  type="button"
+  class="lessly-open-in-claude inline-flex items-center gap-2 rounded-md bg-[var(--color-brand-bright)] px-3 py-2 text-sm font-medium text-[var(--color-text-on-brand)] no-underline shadow-sm transition-colors hover:bg-[var(--color-bg-brand-bright-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-bright)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg-primary)]"
+  data-tool-name={toolName}
+  data-deep-link={deepLink}
+  data-clipboard-text={clipboardText}
+  data-idle-label={label}
+  data-copied-label="Copied — paste into Claude"
+>
+  <span class="lessly-open-in-claude__label">{label}</span>
+  <span class="shrink-0" set:html={iconSvg} />
+</button>
+
+<script>
+  function wire(button: HTMLButtonElement) {
+    if (button.dataset.wired === '1') return;
+    button.dataset.wired = '1';
+    const deepLink = button.dataset.deepLink ?? '';
+    const clipboardText = button.dataset.clipboardText ?? '';
+    const idleLabel = button.dataset.idleLabel ?? 'Open in Claude';
+    const copiedLabel = button.dataset.copiedLabel ?? 'Copied — paste into Claude';
+    const labelEl = button.querySelector<HTMLElement>('.lessly-open-in-claude__label');
+
+    async function copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(clipboardText);
+        if (labelEl) {
+          labelEl.textContent = copiedLabel;
+          window.setTimeout(() => {
+            labelEl.textContent = idleLabel;
+          }, 2000);
+        }
+      } catch {
+        /* user can copy from the page text if clipboard API is unavailable */
+      }
+    }
+
+    button.addEventListener('click', async () => {
+      // Copy first — guaranteed feedback path. If the scheme handler ALSO
+      // launches Claude, great; if not, the user has the prompt on
+      // clipboard and the button says so.
+      await copyToClipboard();
+
+      try {
+        // Hidden iframe avoids a full-navigation error when the scheme
+        // is not registered.
+        const frame = document.createElement('iframe');
+        frame.style.display = 'none';
+        frame.src = deepLink;
+        document.body.appendChild(frame);
+        window.setTimeout(() => frame.remove(), 1000);
+      } catch {
+        /* deep link is best-effort; clipboard already succeeded */
+      }
+    });
+  }
+
+  function wireAll() {
+    document
+      .querySelectorAll<HTMLButtonElement>('button.lessly-open-in-claude')
+      .forEach(wire);
+  }
+  wireAll();
+  document.addEventListener('astro:page-load', wireAll);
+</script>

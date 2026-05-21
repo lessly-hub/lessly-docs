@@ -1,0 +1,33 @@
+---
+/**
+ * AgentTranscript — styled chat exchange between a user, Claude, and any
+ * tool calls. Rendered as semantic HTML (not screenshots) so it is
+ * selectable, accessible, and indexable.
+ *
+ * Spec: 2026-05-21-docs-rewrite-design.md §Component contracts.
+ *
+ * The transcript is an <ol role="log" aria-label="Agent transcript"> of
+ * <li> turns. 16 px vertical gap between turns (`space-y-4`). Children
+ * are <Turn role="…"> elements — each carries the visually-hidden
+ * speaker label and tool-pill structure.
+ *
+ *   <AgentTranscript>
+ *     <Turn role="user">List my deployments.</Turn>
+ *     <Turn role="tool" tool="lessly_list_deployments">…</Turn>
+ *     <Turn role="claude">You have 3 deployments…</Turn>
+ *   </AgentTranscript>
+ */
+interface Props {
+  label?: string;
+}
+
+const { label = 'Agent transcript' } = Astro.props;
+---
+
+<ol
+  class="lessly-agent-transcript list-none space-y-4 p-0 my-6"
+  role="log"
+  aria-label={label}
+>
+  <slot />
+</ol>

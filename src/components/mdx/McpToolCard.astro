@@ -1,0 +1,156 @@
+---
+/**
+ * McpToolCard — first-class MCP tool reference surface.
+ *
+ * Spec: 2026-05-21-docs-rewrite-design.md §Component contracts.
+ *
+ * The MCP tool reference page is the spiritual analogue of an API
+ * endpoint reference. One source of truth (`content/mcp-tools.json`,
+ * owned by a parallel stream) feeds both the rendered cards and the
+ * machine-readable `/mcp/tools.json` route.
+ *
+ * Render order:
+ *   1. Eyebrow `TOOL` label (uppercase, text-xs, tertiary).
+ *   2. <h3> tool name in Fira Mono.
+ *   3. Summary line in `text-text-secondary`.
+ *   4. "Arguments" subheading + token-aligned table.
+ *   5. "Try it" subheading + prompt as a brand-accented blockquote.
+ *   6. <OpenInClaude> CTA.
+ *   7. Optional "Related" footer — links to /docs/<slug>, max 3,
+ *      separated by `·`.
+ *
+ * All wrapped in an <article class="lessly-mcp-tool-card …"> on a
+ * `bg-bg-surface` chip with the standard subtle border + 6 px rounding
+ * the spec calls out for surface cards.
+ */
+import OpenInClaude from './OpenInClaude.astro';
+
+interface ToolArg {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+  default?: string;
+}
+
+interface ToolExample {
+  prompt: string;
+  args: Record<string, unknown>;
+}
+
+export interface McpTool {
+  name: string;
+  summary: string;
+  description: string;
+  args: ToolArg[];
+  example: ToolExample;
+  related?: string[];
+}
+
+interface Props {
+  tool: McpTool;
+}
+
+const { tool } = Astro.props;
+
+// "Related" footer is capped at 3 by the spec — slice defensively so a
+// content author can't blow up the layout by listing six related tools.
+const relatedLinks = (tool.related ?? []).slice(0, 3);
+---
+
+<article
+  class="lessly-mcp-tool-card my-6 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-6"
+>
+  <div
+    class="text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+  >
+    Tool
+  </div>
+  <h3
+    class="lessly-mcp-tool-card__name mt-1 font-mono text-xl text-[var(--color-text-primary)]"
+    id={`tool-${tool.name}`}
+  >
+    {tool.name}
+  </h3>
+  <p class="mt-2 text-[var(--color-text-secondary)]">{tool.summary}</p>
+
+  {tool.description ? (
+    <p class="mt-3 text-[var(--color-text-primary)]">{tool.description}</p>
+  ) : null}
+
+  <h4
+    class="mt-6 text-sm font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+  >
+    Arguments
+  </h4>
+
+  {tool.args.length === 0 ? (
+    <p class="mt-2 text-sm text-[var(--color-text-tertiary)]">
+      No arguments.
+    </p>
+  ) : (
+    <div class="mt-2 overflow-x-auto">
+      <table class="w-full border-collapse text-sm tabular-nums">
+        <thead>
+          <tr class="border-b border-[var(--color-border-subtle)] text-left">
+            <th class="py-2 pr-4 font-medium text-[var(--color-text-tertiary)]">Name</th>
+            <th class="py-2 pr-4 font-medium text-[var(--color-text-tertiary)]">Type</th>
+            <th class="py-2 pr-4 font-medium text-[var(--color-text-tertiary)]">Required</th>
+            <th class="py-2 font-medium text-[var(--color-text-tertiary)]">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tool.args.map((arg) => (
+            <tr class="border-b border-[var(--color-border-subtle)] align-top last:border-b-0">
+              <td class="py-2 pr-4 font-mono text-[var(--color-text-primary)]">{arg.name}</td>
+              <td class="py-2 pr-4 font-mono text-[var(--color-text-tertiary)]">{arg.type}</td>
+              <td class="py-2 pr-4 text-[var(--color-text-secondary)]">
+                {arg.required ? '•' : '—'}
+              </td>
+              <td class="py-2 text-[var(--color-text-primary)]">
+                {arg.description}
+                {arg.default !== undefined ? (
+                  <span class="ml-2 font-mono text-xs text-[var(--color-text-tertiary)]">
+                    default: {arg.default}
+                  </span>
+                ) : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <h4
+    class="mt-6 text-sm font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]"
+  >
+    Try it
+  </h4>
+  <blockquote
+    class="mt-2 border-l-2 border-[var(--color-brand-bright)] pl-4 italic text-[var(--color-text-secondary)]"
+  >
+    {tool.example.prompt}
+  </blockquote>
+
+  <div class="mt-4">
+    <OpenInClaude toolName={tool.name} exampleArgs={tool.example.args} />
+  </div>
+
+  {relatedLinks.length > 0 ? (
+    <footer class="mt-6 text-sm text-[var(--color-text-tertiary)]">
+      <span class="mr-2 uppercase tracking-[0.04em]">Related</span>
+      {relatedLinks.map((slug, i) => (
+        <>
+          {i > 0 ? <span class="mx-2">·</span> : null}
+          <a
+            href={`/docs/${slug}`}
+            class="text-[var(--color-brand-bright)] underline underline-offset-[3px] decoration-1 hover:decoration-2"
+          >
+            {slug}
+          </a>
+        </>
+      ))}
+    </footer>
+  ) : null}
+</article>

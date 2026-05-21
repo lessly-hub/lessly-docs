@@ -1,0 +1,63 @@
+---
+/**
+ * `/docs/reference/tools/<name>` — one prerendered page per MCP tool.
+ *
+ * Pages are generated from `content/mcp-tools.json` via `parseMcpTools()`.
+ * The MCP catalog is the single source of truth (spec §MCP-specific
+ * affordances); adding or removing a tool from the JSON adds or removes
+ * a page on the next build, with no other moving parts.
+ *
+ * The page mirrors the `Layout` + `PageMeta` shell used by the MDX
+ * docs route so sidebar / TOC / breadcrumbs render identically.
+ */
+import Layout from '@/components/Layout.astro';
+import PageMeta from '@/components/PageMeta.astro';
+import McpToolCard from '@/components/mdx/McpToolCard.astro';
+import OpenInClaude from '@/components/mdx/OpenInClaude.astro';
+import CodeBlock from '@/components/mdx/CodeBlock.astro';
+import { parseMcpTools, type McpTool } from '@/lib/mcp-tools';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const { tools } = parseMcpTools();
+  return tools.map((tool) => ({
+    params: { name: tool.name },
+    props: { tool },
+  }));
+}
+
+interface Props {
+  tool: McpTool;
+}
+
+const { tool } = Astro.props;
+
+const title = tool.name;
+const description = tool.summary;
+const exampleArgsJson = JSON.stringify(tool.example.args, null, 2);
+---
+
+<Layout title={title} description={description}>
+  <PageMeta
+    title={title}
+    description={description}
+    diataxis="reference"
+    status="alpha"
+  />
+
+  <McpToolCard tool={tool} />
+
+  <h2 id="when-to-use">When to use</h2>
+  <p>{tool.description}</p>
+
+  <h2 id="example">Example</h2>
+  <p>Ask your agent something like this:</p>
+  <CodeBlock code={tool.example.prompt} lang="text" />
+  <p>The agent will invoke <code>{tool.name}</code> with these arguments:</p>
+  <CodeBlock code={exampleArgsJson} lang="json" />
+
+  <p>
+    <OpenInClaude toolName={tool.name} exampleArgs={tool.example.args} />
+  </p>
+</Layout>

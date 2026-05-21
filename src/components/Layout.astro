@@ -1,0 +1,91 @@
+---
+import '@/styles/global.css';
+import Header from './Header.astro';
+import Sidebar from './Sidebar.astro';
+import Search from './Search.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Footer from './Footer.astro';
+
+// We intentionally do NOT preload font files. With `font-display: optional`,
+// preloads paradoxically hurt LCP — they block the network for the LCP
+// resource. The metric-adjusted `InterFallback` face renders headings
+// instantly with no CLS while Inter loads in the background and applies
+// on the next page-load. See https://web.dev/articles/preload-critical-assets
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Slug used to build the per-page OG image URL (e.g. `get-started/install`). */
+  ogSlug?: string;
+  /** When true, render the page without sidebar/breadcrumbs/prose chrome (homepage, 404). */
+  bare?: boolean;
+}
+
+const SITE = 'https://docs.lessly.com';
+const { title, description = 'Lessly documentation.', ogSlug, bare = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+const canonical = new URL(currentPath, SITE).toString();
+const ogImage = ogSlug
+  ? `${SITE}/og/${ogSlug}.png`
+  : `${SITE}/og/default.png`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script is:inline>
+      // Theme bootstrap. MUST run before any CSS to avoid flash.
+      // Precedence: localStorage('lessly-docs:theme') > prefers-color-scheme > dark default.
+      // Valid values: 'dark' | 'light'. Nothing in the UI sets this key today
+      // (visible ThemeToggle deferred per spec); set it via devtools to opt in.
+      (function () {
+        try {
+          var stored = localStorage.getItem('lessly-docs:theme');
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          if (theme === 'light') document.documentElement.classList.add('light');
+        } catch (e) {}
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Lessly Docs</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Lessly Docs" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+  </head>
+  <body class="flex min-h-screen flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+    <Header />
+    {bare ? (
+      <main class="flex-1">
+        <slot />
+      </main>
+    ) : (
+      <div class="mx-auto flex w-full max-w-[1400px] flex-1">
+        <Sidebar currentPath={currentPath} />
+        <main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
+          <div class="prose mx-auto">
+            <Breadcrumbs currentPath={currentPath} />
+            <slot />
+          </div>
+        </main>
+        <slot name="toc" />
+      </div>
+    )}
+    <Footer />
+    <Search />
+  </body>
+</html>

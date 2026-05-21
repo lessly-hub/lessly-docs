@@ -1,0 +1,45 @@
+---
+title: "MCP component fixtures"
+description: "Exercises McpToolCard and AgentTranscript with synthetic data. Draft — link checker skips."
+diataxis: reference
+status: alpha
+draft: true
+---
+
+This page is a visual harness for the two MCP-specific MDX components. It is not navigable from the sidebar — `draft: true` keeps it out of the link checker and published surface.
+
+The real `McpToolCard` data source lives in `content/mcp-tools.json` (owned by the data stream). The fixture below uses a synthetic tool object so this page renders without coupling to that schema's final shape.
+
+## McpToolCard — synthetic tool
+
+<McpToolCard
+  tool={{
+    name: 'lessly_list_deployments',
+    summary: 'List every deployment in the active workspace.',
+    description: 'Returns up to 50 deployments per call, ordered by most-recent first. Pass `cursor` to page beyond the first batch.',
+    args: [
+      { name: 'workspace_id', type: 'string', required: true, description: 'Workspace to enumerate. Use the workspace slug from `/me`.' },
+      { name: 'limit', type: 'number', required: false, description: 'Maximum entries to return.', default: '50' },
+      { name: 'cursor', type: 'string', required: false, description: 'Opaque pagination cursor from the previous call.' },
+    ],
+    example: {
+      prompt: 'Show me the last 10 deployments in the lessly-prod workspace.',
+      args: { workspace_id: 'lessly-prod', limit: 10 },
+    },
+    related: ['reference/tools/lessly_get_deployment', 'reference/tools/lessly_rollback'],
+  }}
+/>
+
+## AgentTranscript — 3-turn exchange
+
+<AgentTranscript>
+  <Turn role="user">
+    List my deployments in `lessly-prod`.
+  </Turn>
+  <Turn role="tool" tool="lessly_list_deployments">
+    Returned 3 deployments: `web-2026-05-21-a`, `web-2026-05-20-b`, `worker-2026-05-19-c`.
+  </Turn>
+  <Turn role="claude">
+    You have **3 active deployments** in `lessly-prod`. The most recent is `web-2026-05-21-a` from earlier today.
+  </Turn>
+</AgentTranscript>

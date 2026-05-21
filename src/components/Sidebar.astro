@@ -1,0 +1,169 @@
+---
+/**
+ * Sidebar (Slice 3).
+ *
+ * - Renders the full nav tree from `getNav()`.
+ * - 280 px, sticky under the 56 px header, scrollable.
+ * - Each group is collapsible. The group containing the current page starts
+ *   expanded; others start collapsed (unless localStorage has a per-group
+ *   override).
+ * - State persists to `localStorage` per group: `lessly-docs:sidebar:<group-id>`.
+ *
+ * No React. Inline vanilla TS at the bottom of the file (no separate island).
+ */
+import { getNav, type NavStatus } from '@/lib/nav';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '' } = Astro.props;
+const groups = await getNav();
+
+const activeGroupId = (() => {
+  const match = currentPath.match(/^\/docs\/([^/]+)/);
+  return match ? match[1] : '';
+})();
+
+const statusPillStyles: Record<NavStatus, string> = {
+  alpha: 'border-[var(--color-border-warning)] text-[var(--color-text-warning)]',
+  beta: 'border-[var(--color-border-brand)] text-[var(--color-text-brand)]',
+  stable: 'border-[var(--color-border-success)] text-[var(--color-text-success)]',
+};
+---
+
+<aside
+  class="sticky top-[56px] hidden h-[calc(100vh-56px)] w-[280px] shrink-0 overflow-y-auto border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] lg:block"
+  aria-label="Sidebar navigation"
+>
+  <nav class="px-4 py-6" data-sidebar-nav>
+    {groups.map((group) => {
+      const isActiveGroup = group.id === activeGroupId;
+      return (
+        <div
+          class="mb-6"
+          data-sidebar-group
+          data-group-id={group.id}
+          data-initial-expanded={isActiveGroup ? 'true' : 'false'}
+        >
+          <button
+            type="button"
+            data-sidebar-toggle
+            aria-expanded={isActiveGroup ? 'true' : 'false'}
+            aria-controls={`sidebar-group-${group.id}`}
+            class="mb-2 flex w-full items-center justify-between px-2 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-secondary)]"
+          >
+            <span>{group.label}</span>
+            <svg
+              data-sidebar-chevron
+              class="h-3 w-3 transition-transform duration-150"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path d="M3 4.5 6 7.5l3-3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <ul
+            id={`sidebar-group-${group.id}`}
+            data-sidebar-list
+            class="m-0 list-none p-0"
+            hidden={!isActiveGroup}
+          >
+            {group.items.map((item) => {
+              const active = currentPath === item.href;
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    class:list={[
+                      'flex h-8 items-center gap-2 rounded-md px-2 py-3 text-sm no-underline transition-colors',
+                      active
+                        ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]'
+                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                    ]}
+                  >
+                    <span class="flex-1 truncate">{item.title}</span>
+                    {item.status && (
+                      <span
+                        class:list={[
+                          'inline-flex items-center rounded-full border px-1.5 text-[10px] font-medium uppercase tracking-[0.04em]',
+                          statusPillStyles[item.status],
+                        ]}
+                      >
+                        {item.status}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      );
+    })}
+  </nav>
+</aside>
+
+<script>
+  // Sidebar collapse/expand — per-group persistence in localStorage.
+  // Storage key: `lessly-docs:sidebar:<group-id>`, value: 'open' | 'closed'.
+  type GroupState = 'open' | 'closed';
+  const STORAGE_PREFIX = 'lessly-docs:sidebar:';
+
+  function setExpanded(group: HTMLElement, expanded: boolean): void {
+    const button = group.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
+    const list = group.querySelector<HTMLElement>('[data-sidebar-list]');
+    const chevron = group.querySelector<SVGElement>('[data-sidebar-chevron]');
+    if (!button || !list) return;
+    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) list.removeAttribute('hidden');
+    else list.setAttribute('hidden', '');
+    if (chevron) {
+      (chevron as unknown as { style: CSSStyleDeclaration }).style.transform =
+        expanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+  }
+
+  function readStored(groupId: string): GroupState | null {
+    try {
+      const v = localStorage.getItem(STORAGE_PREFIX + groupId);
+      return v === 'open' || v === 'closed' ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStored(groupId: string, state: GroupState): void {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + groupId, state);
+    } catch {
+      // no-op (private mode etc.)
+    }
+  }
+
+  function initGroup(group: HTMLElement): void {
+    const groupId = group.dataset.groupId ?? '';
+    const initial = group.dataset.initialExpanded === 'true';
+    const stored = readStored(groupId);
+    const expanded = stored ? stored === 'open' : initial;
+    setExpanded(group, expanded);
+
+    const button = group.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
+    if (!button) return;
+    button.addEventListener('click', () => {
+      const current = button.getAttribute('aria-expanded') === 'true';
+      const next = !current;
+      setExpanded(group, next);
+      writeStored(groupId, next ? 'open' : 'closed');
+    });
+  }
+
+  const nav = document.querySelector<HTMLElement>('[data-sidebar-nav]');
+  if (nav) {
+    nav.querySelectorAll<HTMLElement>('[data-sidebar-group]').forEach(initGroup);
+  }
+</script>

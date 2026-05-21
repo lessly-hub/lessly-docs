@@ -1,0 +1,85 @@
+---
+/**
+ * Turn — a single message inside <AgentTranscript>.
+ *
+ * Spec: 2026-05-21-docs-rewrite-design.md §Component contracts → AgentTranscript.
+ *
+ * Roles:
+ *   - `user`   — what the human typed. Visible label USER (text-text-secondary).
+ *   - `claude` — Claude's reply. Visible label CLAUDE (text-brand-bright).
+ *   - `tool`   — a tool call's result. Visible label TOOL (text-text-tertiary).
+ *               Tool turns may pass `tool="<name>"` to surface a filename pill
+ *               via <figcaption>; without it we still emit the figure so the
+ *               structural contract holds.
+ *
+ * Every turn ships a visually-hidden speaker label (`<span class="sr-only">…</span>`)
+ * so screen readers don't have to infer the speaker from style. The parent
+ * <AgentTranscript> is an <ol role="log"> so axe-core sees this as a
+ * conversation log, not a decorative list.
+ */
+type Role = 'user' | 'claude' | 'tool';
+
+interface Props {
+  role: Role;
+  tool?: string;
+}
+
+const { role, tool } = Astro.props;
+
+const labelMap: Record<Role, { visible: string; sr: string; classes: string }> = {
+  user: {
+    visible: 'USER',
+    sr: 'User said:',
+    classes: 'text-[var(--color-text-secondary)]',
+  },
+  claude: {
+    visible: 'CLAUDE',
+    sr: 'Claude said:',
+    classes: 'text-[var(--color-brand-bright)]',
+  },
+  tool: {
+    visible: 'TOOL',
+    sr: 'Tool result:',
+    classes: 'text-[var(--color-text-tertiary)]',
+  },
+};
+
+const cfg = labelMap[role];
+---
+
+<li class="lessly-agent-transcript__turn" data-role={role}>
+  <span class="sr-only">{cfg.sr}</span>
+  <div class={`text-xs font-semibold uppercase tracking-[0.04em] ${cfg.classes}`} aria-hidden="true">
+    {cfg.visible}
+  </div>
+
+  {role === 'tool' ? (
+    <figure class="mt-2">
+      {tool ? (
+        <figcaption
+          class="inline-block rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] px-2 py-1 font-mono text-xs text-[var(--color-text-tertiary)]"
+        >
+          {tool}
+        </figcaption>
+      ) : null}
+      <div class="mt-2 rounded bg-[var(--color-bg-elevated)] p-4 text-[var(--color-text-primary)]">
+        <slot />
+      </div>
+    </figure>
+  ) : (
+    <div class="mt-2 text-[var(--color-text-primary)]">
+      <slot />
+    </div>
+  )}
+</li>
+
+<style is:global>
+  .lessly-agent-transcript__turn > div > :first-child,
+  .lessly-agent-transcript__turn > figure > div > :first-child {
+    margin-top: 0;
+  }
+  .lessly-agent-transcript__turn > div > :last-child,
+  .lessly-agent-transcript__turn > figure > div > :last-child {
+    margin-bottom: 0;
+  }
+</style>

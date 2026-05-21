@@ -1,0 +1,159 @@
+name: CI
+
+# Quality gates for lessly-docs (Astro 6 + first-party docs engine).
+# Runs on every PR. Production deploy is handled by deploy.yml.
+#
+# Most jobs rebuild the site themselves rather than sharing a build
+# artifact — `astro preview` on the Cloudflare adapter wants the full
+# project state (node_modules, .astro/ cache, etc.) not just dist/, and
+# the rebuild cost (~6s) is small enough that artifact wiring is not
+# worth the cross-job fragility.
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+
+jobs:
+  lint:
+    name: Lint (vocab + nav depth)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Banned-vocab lint (content)
+        # Two banned terms per AGENTS.md / CONTRIBUTING.md:
+        #   - `extension` (case-insensitive, word boundary)
+        #   - `Dev Console` (case-sensitive exact phrase)
+        # Exclude `glossary/` and stripped code fences/spans.
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          fail=0
+          for file in content/docs/**/*.mdx content/docs/**/*.md; do
+            [ -e "$file" ] || continue
+            case "$file" in
+              *glossary/*) continue ;;
+            esac
+            stripped=$(awk '
+              BEGIN { in_fence = 0 }
+              /^```/ { in_fence = !in_fence; next }
+              in_fence == 0 { print }
+            ' "$file" | sed -E 's/`[^`]*`//g')
+            if printf "%s\n" "$stripped" | grep -nE -i '\bextension\b' >/dev/null; then
+              echo "::error file=$file::contains banned word 'extension'"
+              printf "%s\n" "$stripped" | grep -nE -i '\bextension\b' | sed "s|^|$file:|"
+              fail=1
+            fi
+            if printf "%s\n" "$stripped" | grep -n 'Dev Console' >/dev/null; then
+              echo "::error file=$file::contains banned phrase 'Dev Console'"
+              printf "%s\n" "$stripped" | grep -n 'Dev Console' | sed "s|^|$file:|"
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "Banned vocabulary detected. See AGENTS.md."
+            exit 1
+          fi
+          echo "lint-vocab: content clean"
+      - name: Nav-depth lint
+        run: node scripts/check-nav-depth.mjs
+
+  typecheck:
+    name: Typecheck (astro check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec astro check
+
+  unit:
+    name: Unit tests (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  build-and-gates:
+    name: Build + links + e2e + verify-ai + lighthouse
+    runs-on: ubuntu-latest
+    # One job that does the build once and then runs every gate that
+    # depends on the built site. Avoids cross-job artifact transfer (the
+    # Cloudflare adapter expects the full project tree, not just dist/).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build (astro + og)
+        run: pnpm build
+
+      - name: Pagefind index
+        run: pnpm pagefind
+
+      - name: Link integrity
+        run: pnpm check:links
+
+      - name: E2E (playwright + axe)
+        # Playwright's webServer config will reuse the existing dist/ and
+        # pagefind index and start `astro preview` against it.
+        run: pnpm test:e2e
+
+      - name: Start preview for verify-ai + lighthouse
+        run: |
+          pnpm exec astro preview --host 127.0.0.1 --port 4321 &
+          echo $! > .preview.pid
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:4321/ >/dev/null; then break; fi
+            sleep 1
+          done
+
+      - name: Verify AI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERIFY_BASE: http://127.0.0.1:4321
+        run: pnpm verify:ai
+
+      - name: Lighthouse CI
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        run: pnpm exec lhci autorun --config=./lighthouserc.json
+
+      - name: Stop preview
+        if: always()
+        run: |
+          if [ -f .preview.pid ]; then kill "$(cat .preview.pid)" 2>/dev/null || true; fi
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

@@ -1,0 +1,21 @@
+---
+title: "MCP tools"
+description: "Catalog of MCP tools exposed by Lessly."
+diataxis: reference
+status: alpha
+---
+
+The Lessly MCP server exposes the following tools to your AI agent. Each tool has its own reference page with arguments, an example prompt, and an "Open in Claude" CTA.
+
+The machine-readable catalog is served at [`/mcp/tools.json`](/mcp/tools.json) — that endpoint is what an MCP client reads.
+
+## Tools
+
+- [`lessly_deploy`](/docs/reference/tools/lessly_deploy) — Build and deploy a git ref to a Lessly environment.
+- [`lessly_get_deployment`](/docs/reference/tools/lessly_get_deployment) — Fetch the status and metadata of a single deployment.
+- [`lessly_list_deployments`](/docs/reference/tools/lessly_list_deployments) — List recent deployments for an app, newest first.
+- [`lessly_get_logs`](/docs/reference/tools/lessly_get_logs) — Read build or runtime logs for a deployment.
+- [`lessly_set_env`](/docs/reference/tools/lessly_set_env) — Create or update an environment variable on an app.
+- [`lessly_list_envs`](/docs/reference/tools/lessly_list_envs) — List environment variables configured on an app.
+- [`lessly_add_domain`](/docs/reference/tools/lessly_add_domain) — Attach a custom domain to an app.
+- [`lessly_rollback`](/docs/reference/tools/lessly_rollback) — Promote a previous deployment back to production.

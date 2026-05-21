@@ -1,0 +1,17 @@
+---
+title: "Roll back a deploy"
+description: "Promote a previous deployment to production in one sentence."
+diataxis: how-to
+status: alpha
+---
+
+This page is a stub. The full how-to lands in the next docs cycle.
+
+The short version: ask your agent `"Roll production back to the last known good deploy."` The agent calls [`lessly_list_deployments`](/docs/reference/tools/lessly_list_deployments) to find the candidate and [`lessly_rollback`](/docs/reference/tools/lessly_rollback) to promote it.
+
+## Coming in this guide
+
+- Identifying the last known good deploy
+- Promoting a specific deployment id
+- Rolling forward after a rollback
+- Audit trail: what the rollback recorded

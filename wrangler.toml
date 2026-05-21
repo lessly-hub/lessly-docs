@@ -1,14 +1,32 @@
 name = "lessly-docs"
-main = ".open-next/worker.js"
-compatibility_date = "2026-05-20"
+compatibility_date = "2026-05-21"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
-[assets]
-directory = ".open-next/assets"
-binding = "ASSETS"
-
+# Pinned route — must match the production Worker name above. Without this,
+# `docs.lessly.com` would silently keep routing to the previous Worker on
+# first deploy of the rewrite. Spec §Rollout: "production promoted to
+# docs.lessly.com".
 [[routes]]
 pattern = "docs.lessly.com"
 custom_domain = true
 zone_name = "lessly.com"
+
+# Astro Cloudflare adapter (`output: 'static'`) emits its own resolved config at
+# `dist/server/wrangler.json` during `astro build`. To preview or deploy, use
+# that file as the Wrangler config:
+#
+#   wrangler dev    --config dist/server/wrangler.json
+#   wrangler deploy --config dist/server/wrangler.json
+#
+# The root `wrangler.toml` keeps the project name + compatibility date so that
+# `wrangler` can be invoked from the repo root for non-build commands. Build
+# artifacts live in `dist/`:
+#   dist/client/  — prerendered HTML + static assets (Pagefind index lands here)
+#   dist/server/  — the Worker entry (only invoked for non-prerendered routes)
+#
+# All S1 pages are prerendered, so the Worker is a thin fallback only.
+
+[assets]
+directory = "./dist/client"
+binding = "ASSETS"

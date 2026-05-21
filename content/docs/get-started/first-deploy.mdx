@@ -1,0 +1,48 @@
+---
+title: "Your first deploy"
+description: "Deploy a Next.js app to Lessly in five minutes."
+diataxis: tutorial
+status: beta
+---
+
+You have the Lessly MCP installed. The next step is shipping a real app. By the end of this page, your code is live at a Lessly URL — and your agent did the typing.
+
+<Callout variant="note">
+A Lessly workspace is required. If you skipped it, [sign up at lessly.com](https://lessly.com/signup) and come back.
+</Callout>
+
+## Prerequisites
+
+- The Lessly MCP installed in your agent — see [Install](/docs/get-started/install).
+- A Next.js app in a git repo. Any GitHub repo works; a fresh `create-next-app` is fine.
+- Your agent is open and connected to your Lessly workspace.
+
+## Step 1 — Point your agent at the repo
+
+Open your repo in your agent. In Claude Code, that means `cd` into the project and start a session. In Claude Desktop or Cursor, open the project folder.
+
+## Step 2 — Ask for the deploy
+
+Paste this into your agent:
+
+<CodeBlock lang="text" code="Deploy my main branch to production." />
+
+The agent calls `lessly_create_deployment`. It reads your repo, detects Next.js, picks the right build command, and starts the deploy. You will see the agent stream status updates as the build runs.
+
+## Step 3 — Verify the site is live
+
+When the agent reports success, ask:
+
+> What's the URL of my latest deployment?
+
+The agent calls `lessly_get_deployment` and returns the production URL. Open it in your browser. Your app is live.
+
+## What you just did
+
+You shipped a production deploy without writing a config file, a Dockerfile, or a YAML pipeline. The agent translated one sentence into a build, a deploy, and a URL.
+
+## What to do next
+
+- *"Promote this deploy to the apex domain."*
+- *"Set the `DATABASE_URL` environment variable on production."*
+- *"Show me the build logs for the last failed deploy."*
