@@ -388,8 +388,9 @@ body {
 .prose figure.lessly-code code {
   background: transparent;
   border: 0;
-  padding: 0;
   border-radius: 0;
+  /* No `padding: 0` here — the `.lessly-code pre.shiki` rule below sets it.
+   * Adding it back would clobber that rule via higher selector specificity. */
 }
 
 .prose pre {
@@ -425,4 +426,113 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-brand-bright);
   outline-offset: 2px;
+}
+
+/*
+ * Code block styles.
+ * Lives here (not in CodeBlock.astro `<style is:global>`) because fenced ``` blocks
+ * are rendered by `src/lib/rehype/code.ts` as raw HTML — the CodeBlock Astro component
+ * is never mounted on those pages, so its scoped styles would never bundle. Keeping
+ * these in global.css guarantees the rule set ships on every page that uses code.
+ */
+.lessly-code pre.shiki {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  background-color: var(--shiki-github-dark-bg, var(--color-bg-elevated)) !important;
+  color: var(--shiki-github-dark) !important;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+}
+.light .lessly-code pre.shiki {
+  background-color: var(--shiki-github-light-bg, var(--color-bg-elevated)) !important;
+  color: var(--shiki-github-light) !important;
+}
+.lessly-code pre.shiki code {
+  display: block;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre;
+}
+.lessly-code .code-line {
+  display: block;
+  color: var(--shiki-github-dark);
+}
+.light .lessly-code .code-line {
+  color: var(--shiki-github-light);
+}
+.lessly-code .code-line .line,
+.lessly-code pre.shiki span {
+  color: var(--shiki-github-dark);
+}
+.light .lessly-code pre.shiki span {
+  color: var(--shiki-github-light);
+}
+.lessly-code .code-line--highlighted {
+  background-color: color-mix(in srgb, var(--color-brand-bright) 14%, transparent);
+  margin: 0 -1.25rem;
+  padding: 0 1.25rem;
+  border-left: 2px solid var(--color-brand-bright);
+  padding-left: calc(1.25rem - 2px);
+}
+/* Diff variant tints from @shikijs/transformers notation. */
+.lessly-code--diff .code-line.diff.add,
+.lessly-code--diff .code-line.diff.remove {
+  margin: 0 -1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  position: relative;
+}
+.lessly-code--diff .code-line.diff.add {
+  background-color: color-mix(in srgb, var(--color-text-success) 12%, transparent);
+}
+.lessly-code--diff .code-line.diff.remove {
+  background-color: color-mix(in srgb, var(--color-text-danger) 12%, transparent);
+}
+.lessly-code--diff .code-line.diff.add::before {
+  content: '+';
+  color: var(--color-text-success);
+  margin-right: 0.5rem;
+}
+.lessly-code--diff .code-line.diff.remove::before {
+  content: '-';
+  color: var(--color-text-danger);
+  margin-right: 0.5rem;
+}
+/* Terminal variant — dim prompt char. Best-effort via ::first-letter. */
+.lessly-code--terminal .code-line::first-letter {
+  color: var(--color-text-tertiary);
+}
+/* Line numbers */
+.lessly-code .shiki-pre--numbered {
+  counter-reset: code-line;
+}
+.lessly-code .shiki-pre--numbered .code-line {
+  counter-increment: code-line;
+}
+.lessly-code .shiki-pre--numbered .code-line::before {
+  content: counter(code-line);
+  display: inline-block;
+  width: 2rem;
+  margin-right: 1rem;
+  text-align: right;
+  color: var(--color-text-tertiary);
+  user-select: none;
+}
+.lessly-code .lessly-code__icon-check.hidden {
+  display: none;
+}
+.lessly-code .lessly-code__icon {
+  display: inline-flex;
+}
+.lessly-code template.lessly-code__source {
+  display: none;
 }

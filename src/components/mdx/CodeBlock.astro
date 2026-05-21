@@ -107,122 +107,12 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
   <template class="lessly-code__source">{code}</template>
 </figure>
 
-<style is:global>
-  .lessly-code pre.shiki {
-    margin: 0;
-    padding: 1rem 1.25rem;
-    background-color: var(--color-bg-elevated) !important;
-    color: var(--shiki-github-dark) !important;
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    line-height: 1.55;
-    overflow: visible;
-    border: 0;
-    border-radius: 0;
-  }
-  .light .lessly-code pre.shiki {
-    color: var(--shiki-github-light) !important;
-  }
-  .lessly-code pre.shiki code {
-    display: block;
-    background: transparent;
-    color: inherit;
-    padding: 0;
-    border-radius: 0;
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    white-space: pre;
-  }
-  .lessly-code .code-line {
-    display: block;
-    color: var(--shiki-github-dark);
-  }
-  .light .lessly-code .code-line {
-    color: var(--shiki-github-light);
-  }
-  .lessly-code .code-line .line,
-  .lessly-code pre.shiki span {
-    color: var(--shiki-github-dark);
-  }
-  .light .lessly-code pre.shiki span {
-    color: var(--shiki-github-light);
-  }
-  .lessly-code .code-line {
-    background-color: color-mix(in srgb, var(--shiki-github-dark-bg, transparent) 0%, transparent);
-  }
-  .lessly-code pre.shiki {
-    background-color: var(--shiki-github-dark-bg, var(--color-bg-elevated)) !important;
-  }
-  .light .lessly-code pre.shiki {
-    background-color: var(--shiki-github-light-bg, var(--color-bg-elevated)) !important;
-  }
-  .lessly-code .code-line--highlighted {
-    background-color: color-mix(in srgb, var(--color-brand-bright) 14%, transparent);
-    margin: 0 -1.25rem;
-    padding: 0 1.25rem;
-    border-left: 2px solid var(--color-brand-bright);
-    padding-left: calc(1.25rem - 2px);
-  }
-  /* Diff variant tints from @shikijs/transformers notation. */
-  .lessly-code--diff .code-line.diff.add,
-  .lessly-code--diff .code-line.diff.remove {
-    margin: 0 -1.25rem;
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-    position: relative;
-  }
-  .lessly-code--diff .code-line.diff.add {
-    background-color: color-mix(in srgb, var(--color-text-success) 12%, transparent);
-  }
-  .lessly-code--diff .code-line.diff.remove {
-    background-color: color-mix(in srgb, var(--color-text-danger) 12%, transparent);
-  }
-  .lessly-code--diff .code-line.diff.add::before {
-    content: '+';
-    color: var(--color-text-success);
-    margin-right: 0.5rem;
-  }
-  .lessly-code--diff .code-line.diff.remove::before {
-    content: '-';
-    color: var(--color-text-danger);
-    margin-right: 0.5rem;
-  }
-  /* Terminal variant — dim prompt char. We post-process via CSS: any line that
-     starts with `$` is rendered by Shiki as just text; readers see prompt
-     dimming via the `:first-child` trick on each line span. */
-  .lessly-code--terminal .code-line::first-letter {
-    /* When the first character is `$` Shiki gives it text color. We dim it.
-       This is best-effort — proper dimming would require a transformer. */
-    color: var(--color-text-tertiary);
-  }
-  /* Line numbers */
-  .lessly-code .shiki-pre--numbered {
-    counter-reset: code-line;
-  }
-  .lessly-code .shiki-pre--numbered .code-line {
-    counter-increment: code-line;
-  }
-  .lessly-code .shiki-pre--numbered .code-line::before {
-    content: counter(code-line);
-    display: inline-block;
-    width: 2rem;
-    margin-right: 1rem;
-    text-align: right;
-    color: var(--color-text-tertiary);
-    user-select: none;
-  }
-  .lessly-code .lessly-code__icon-check.hidden {
-    display: none;
-  }
-  .lessly-code .lessly-code__icon {
-    display: inline-flex;
-  }
-  .lessly-code template.lessly-code__source {
-    display: none;
-  }
-</style>
-
+<!--
+  Styles for .lessly-code live in src/styles/global.css (not here).
+  Reason: fenced ``` blocks are rendered as raw HTML by src/lib/rehype/code.ts
+  without mounting this component, so any `<style is:global>` block here would
+  never bundle on pages that only use fenced blocks. Keep CSS global.
+-->
 <script>
   // Vanilla TS — ~20 lines, no framework. Wires up every CodeBlock on the page.
   function wireCopyButtons() {
