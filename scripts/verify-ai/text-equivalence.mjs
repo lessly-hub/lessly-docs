@@ -131,6 +131,11 @@ function extractSlugsFromLlmsTxt(text) {
 
 function stripHtml(html) {
   return html
+    // Strip HTML comments FIRST. Otherwise a comment containing literal
+    // <script>/<style>/<aside>/<header> text (in prose, code samples, or
+    // dev comments) will trick the tag-region regexes below into eating
+    // page content up to the next matching close tag.
+    .replace(/<!--[\s\S]*?-->/g, ' ')
     // Drop the entire <head>; <body> chrome we keep then strip — see below.
     .replace(/<head\b[\s\S]*?<\/head>/gi, ' ')
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')

@@ -107,9 +107,10 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
 </figure>
 
 <!--
-  Styles for .lessly-code live in src/styles/global.css and the Copy button
-  wire-up lives in src/lib/code-copy.ts (loaded from Layout.astro). Reason:
-  fenced ``` blocks are rendered as raw HTML by src/lib/rehype/code.ts and
-  never mount this component, so any `<style>` or `<script>` here would not
-  bundle on pages that only use fenced blocks.
+  Styles for .lessly-code live in src/styles/global.css and the Copy
+  button wire-up lives in src/lib/code-copy.ts (loaded from Layout.astro).
+  Reason: fenced markdown code blocks are rendered as raw HTML by
+  src/lib/rehype/code.ts and never mount this Astro component, so any
+  style or script block here would not bundle on pages that only use
+  fenced markdown blocks.
 -->
