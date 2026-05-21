@@ -1,0 +1,31 @@
+---
+/**
+ * 404 — single neutral message. No clever copy.
+ * Cloudflare [assets] serves this static file for any unmatched path.
+ */
+import Layout from '@/components/Layout.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  title="Not found"
+  description="The page you were looking for does not exist."
+  bare
+>
+  <section class="mx-auto max-w-2xl px-6 py-24">
+    <h1
+      class="font-display text-[var(--text-display)] leading-[1.05] tracking-tight text-[var(--color-text-primary)]"
+    >
+      404
+    </h1>
+
+    <p class="mt-6 text-lg text-[var(--color-text-secondary)]">
+      This page does not exist. Try the search or head back to
+      <a
+        href="/docs/get-started/install"
+        class="text-[var(--color-brand-bright)] underline underline-offset-[3px] decoration-1 hover:decoration-2"
+      >Get Started</a>.
+    </p>
+  </section>
+</Layout>

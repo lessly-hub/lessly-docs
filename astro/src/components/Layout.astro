@@ -4,16 +4,19 @@ import Header from './Header.astro';
 import Sidebar from './Sidebar.astro';
 import Search from './Search.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
+import Footer from './Footer.astro';
 
 interface Props {
   title: string;
   description?: string;
   /** Slug used to build the per-page OG image URL (e.g. `get-started/install`). */
   ogSlug?: string;
+  /** When true, render the page without sidebar/breadcrumbs/prose chrome (homepage, 404). */
+  bare?: boolean;
 }
 
 const SITE = 'https://docs.lessly.com';
-const { title, description = 'Lessly documentation.', ogSlug } = Astro.props;
+const { title, description = 'Lessly documentation.', ogSlug, bare = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 const canonical = new URL(currentPath, SITE).toString();
 const ogImage = ogSlug
@@ -24,11 +27,27 @@ const ogImage = ogSlug
 <!doctype html>
 <html lang="en">
   <head>
+    <script is:inline>
+      // Theme bootstrap. MUST run before any CSS to avoid flash.
+      // Precedence: localStorage('lessly-docs:theme') > prefers-color-scheme > dark default.
+      // Valid values: 'dark' | 'light'. Nothing in the UI sets this key today
+      // (visible ThemeToggle deferred per spec); set it via devtools to opt in.
+      (function () {
+        try {
+          var stored = localStorage.getItem('lessly-docs:theme');
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          if (theme === 'light') document.documentElement.classList.add('light');
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} — Lessly Docs</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Lessly Docs" />
     <meta property="og:title" content={title} />
@@ -49,26 +68,26 @@ const ogImage = ogSlug
       rel="stylesheet"
       href="https://rsms.me/inter/inter.css"
     />
-    <script is:inline>
-      // Respect prefers-color-scheme on first load. Light mode opts in via `.light` on <html>.
-      try {
-        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-        if (prefersLight) document.documentElement.classList.add('light');
-      } catch (e) {}
-    </script>
   </head>
-  <body class="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+  <body class="flex min-h-screen flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
     <Header />
-    <div class="mx-auto flex max-w-[1400px]">
-      <Sidebar currentPath={currentPath} />
-      <main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
-        <div class="prose mx-auto">
-          <Breadcrumbs currentPath={currentPath} />
-          <slot />
-        </div>
+    {bare ? (
+      <main class="flex-1">
+        <slot />
       </main>
-      <slot name="toc" />
-    </div>
+    ) : (
+      <div class="mx-auto flex w-full max-w-[1400px] flex-1">
+        <Sidebar currentPath={currentPath} />
+        <main class="min-w-0 flex-1 px-6 py-10 lg:px-12">
+          <div class="prose mx-auto">
+            <Breadcrumbs currentPath={currentPath} />
+            <slot />
+          </div>
+        </main>
+        <slot name="toc" />
+      </div>
+    )}
+    <Footer />
     <Search />
   </body>
 </html>

@@ -8,7 +8,7 @@ import * as MdxComponents from '@/components/mdx';
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const entries = await getCollection('docs');
+  const entries = await getCollection('docs', (e) => !e.data.draft && !e.id.startsWith('_fixtures/'));
   return entries.map((entry) => ({
     params: { slug: entry.id.replace(/\.mdx?$/, '') },
     props: { entry },

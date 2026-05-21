@@ -1,0 +1,17 @@
+---
+title: "How deployment works"
+description: "What happens between your prompt and a live URL."
+diataxis: explanation
+status: alpha
+---
+
+This page is a stub. The full explanation lands in the next docs cycle.
+
+A deploy is a build plus a release. The agent calls [`lessly_deploy`](/docs/reference/tools/lessly_deploy) with your git ref. Lessly runs the build in an isolated container, captures the output as an immutable artifact, then atomically routes traffic from the previous artifact to the new one. If the build fails, traffic never moves.
+
+## Coming in this explanation
+
+- The build container and what's available inside it
+- Artifact storage and how long deploys are retained
+- Traffic routing: instant atomic swap, no warm-up window
+- Why builds are deterministic — same input, same artifact

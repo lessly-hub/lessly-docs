@@ -1,0 +1,17 @@
+---
+title: "Add a custom domain"
+description: "Point a domain you own at a Lessly app."
+diataxis: how-to
+status: alpha
+---
+
+This page is a stub. The full how-to lands in the next docs cycle.
+
+The short version: tell your agent `"Add example.com to my app."` The agent calls [`lessly_add_domain`](/docs/reference/tools/lessly_add_domain), shows you the DNS records to add at your registrar, then verifies once propagation completes.
+
+## Coming in this guide
+
+- Apex versus subdomain setup
+- DNS records (`A`, `AAAA`, `CNAME`) for each registrar pattern
+- TLS certificate issuance and renewal
+- Removing a domain

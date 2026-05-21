@@ -4,3 +4,8 @@ dist
 .wrangler
 .dev.vars
 *.log
+
+# Playwright + Lighthouse output
+playwright-report/
+test-results/
+.lighthouseci/

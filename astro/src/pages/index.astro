@@ -1,18 +1,52 @@
 ---
-// Placeholder root for S1. Real landing page lands in S6.
-// Static page that redirects to the only shipped doc — Cloudflare serves the HTML
-// from [assets], the meta-refresh + canonical do the rest. No Worker invocation.
+/**
+ * Homepage — Slice 6.
+ * Single content column. No card grid (AI-slop kill #1).
+ * Instrument Serif H1 at `display` size — the only place serif is allowed (spec §Typography).
+ * Pitch is grounded in the existing install tutorial: "your AI agent can call Lessly
+ * tools to deploy and manage your apps." We do not invent product claims.
+ */
+import Layout from '@/components/Layout.astro';
+
 export const prerender = true;
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Lessly Docs</title>
-    <meta http-equiv="refresh" content="0; url=/docs/get-started/install" />
-    <link rel="canonical" href="/docs/get-started/install" />
-  </head>
-  <body>
-    <p>Redirecting to <a href="/docs/get-started/install">/docs/get-started/install</a>.</p>
-  </body>
-</html>
+
+<Layout
+  title="Lessly Docs"
+  description="Documentation for the Lessly MCP — give your AI agent the tools to deploy and manage your apps."
+  bare
+>
+  <section class="mx-auto max-w-2xl px-6 py-24">
+    <h1
+      class="font-display text-[var(--text-display)] leading-[1.05] tracking-tight text-[var(--color-text-primary)]"
+    >
+      Documentation for Lessly.
+    </h1>
+
+    <p class="mt-6 text-lg text-[var(--color-text-secondary)]">
+      Give your AI agent the tools to deploy, inspect, and manage your apps —
+      from the same chat window you already work in.
+    </p>
+
+    <div class="mt-10">
+      <a
+        href="/docs/get-started/install"
+        class="inline-block rounded-md bg-[var(--color-brand-bright)] px-6 py-3 font-medium text-[var(--color-text-on-brand)] no-underline transition-colors hover:bg-[var(--color-bg-brand-bright-hover)]"
+      >
+        Get started →
+      </a>
+    </div>
+
+    <p class="mt-6 text-sm text-[var(--color-text-tertiary)]">
+      <a
+        href="/docs/concepts"
+        class="text-[var(--color-text-secondary)] no-underline hover:text-[var(--color-text-primary)]"
+      >Concepts</a>
+      <span class="px-2" aria-hidden="true">·</span>
+      <a
+        href="/docs/reference"
+        class="text-[var(--color-text-secondary)] no-underline hover:text-[var(--color-text-primary)]"
+      >Reference</a>
+    </p>
+  </section>
+</Layout>

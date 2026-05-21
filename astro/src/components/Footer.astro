@@ -1,0 +1,75 @@
+---
+/**
+ * Footer — three columns of inline-link lists, brand mark + © at the bottom.
+ * No card grid (AI-slop kill #1). Each column capped at 3 items.
+ */
+const year = new Date().getFullYear();
+
+type Link = { label: string; href: string; external?: boolean };
+type Column = { title: string; links: Link[] };
+
+const columns: Column[] = [
+  {
+    title: 'Docs',
+    links: [
+      { label: 'Get Started', href: '/docs/get-started/install' },
+      { label: 'Guides', href: '/docs/guides' },
+      { label: 'Reference', href: '/docs/reference' },
+    ],
+  },
+  {
+    title: 'Product',
+    links: [
+      { label: 'Pricing', href: 'https://lessly.com/pricing', external: true },
+      { label: 'Changelog', href: '/docs/changelog' },
+      { label: 'Status', href: 'https://status.lessly.com', external: true },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: 'https://lessly.com', external: true },
+      { label: 'Blog', href: 'https://lessly.com/blog', external: true },
+      { label: 'Contact', href: 'https://lessly.com/contact', external: true },
+    ],
+  },
+];
+---
+
+<footer class="mt-16 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)]">
+  <div class="mx-auto grid max-w-[1400px] gap-10 px-6 py-12 sm:grid-cols-3">
+    {columns.map((col) => (
+      <div>
+        <h2 class="mb-3 text-xs font-medium uppercase tracking-[0.04em] text-[var(--color-text-tertiary)]">
+          {col.title}
+        </h2>
+        <ul class="space-y-2 text-sm">
+          {col.links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class="text-[var(--color-text-secondary)] no-underline transition-colors hover:text-[var(--color-text-primary)]"
+                {...(link.external ? { rel: 'noreferrer noopener', target: '_blank' } : {})}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <div class="border-t border-[var(--color-border-subtle)]">
+    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-6 text-xs text-[var(--color-text-tertiary)]">
+      <div class="flex items-center gap-2">
+        <span
+          class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[var(--color-brand-bright)] font-semibold text-[var(--color-text-on-brand)]"
+          aria-hidden="true"
+        >L</span>
+        <span>Lessly</span>
+      </div>
+      <span>© {year} Lessly. All rights reserved.</span>
+    </div>
+  </div>
+</footer>

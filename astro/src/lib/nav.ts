@@ -111,6 +111,51 @@ function entryHref(entry: CollectionEntry<'docs'>): string {
   return `/docs/${slug}`;
 }
 
+/**
+ * Pure ordering logic for a single group — extracted so it can be unit-tested
+ * without an Astro runtime. Given the filenames present in the group and an
+ * optional `_order.json` array, returns the ordered filenames or throws with
+ * a developer-readable error matching the rules in the module-level docblock.
+ *
+ *   - If `order` is supplied:
+ *       * every file in `filenamesPresent` MUST appear in `order` (Rule 1)
+ *       * every entry in `order` MUST be present in `filenamesPresent` (Rule 2)
+ *       * an empty `order` array still triggers Rule 1 (the first missing
+ *         file is reported)
+ *   - If `order` is null, sort alphabetically with `index` pinned first.
+ */
+export function orderGroupFilenames(
+  groupId: string,
+  filenamesPresent: Iterable<string>,
+  order: string[] | null,
+): string[] {
+  const present = new Set(filenamesPresent);
+  if (order) {
+    // Rule 2 first: surface unknown entries before complaining about missing ones.
+    for (const name of order) {
+      if (!present.has(name)) {
+        throw new Error(
+          `[nav] _order.json in "${groupId}" references "${name}" but content/docs/${groupId}/${name}.mdx does not exist.`,
+        );
+      }
+    }
+    const orderSet = new Set(order);
+    for (const name of present) {
+      if (!orderSet.has(name)) {
+        throw new Error(
+          `[nav] content/docs/${groupId}/${name}.mdx exists but is missing from content/docs/${groupId}/_order.json. Add "${name}" to the order array.`,
+        );
+      }
+    }
+    return [...order];
+  }
+  return [...present].sort((a, b) => {
+    if (a === 'index') return -1;
+    if (b === 'index') return 1;
+    return a.localeCompare(b);
+  });
+}
+
 export async function getNav(): Promise<NavGroup[]> {
   const groupsConfig = loadGroupsConfig();
   const knownGroupIds = new Set(groupsConfig.order);
@@ -136,39 +181,11 @@ export async function getNav(): Promise<NavGroup[]> {
     const bucket = byGroup.get(groupId);
     if (!bucket || bucket.length === 0) continue;
 
-    const filenamesPresent = new Set(bucket.map((l) => l.filename));
+    const filenamesPresent = bucket.map((l) => l.filename);
     const order = loadOrderFile(groupId);
-
-    let ordered: Located[];
-    if (order) {
-      // Rule 2: every entry in _order.json must resolve to a file.
-      for (const name of order) {
-        if (!filenamesPresent.has(name)) {
-          throw new Error(
-            `[nav] _order.json in "${groupId}" references "${name}" but content/docs/${groupId}/${name}.mdx does not exist.`,
-          );
-        }
-      }
-      // Rule 1: every file must appear in _order.json.
-      const orderSet = new Set(order);
-      for (const name of filenamesPresent) {
-        if (!orderSet.has(name)) {
-          throw new Error(
-            `[nav] content/docs/${groupId}/${name}.mdx exists but is missing from content/docs/${groupId}/_order.json. Add "${name}" to the order array.`,
-          );
-        }
-      }
-      const byName = new Map(bucket.map((l) => [l.filename, l] as const));
-      ordered = order.map((name) => byName.get(name)!);
-    } else {
-      // Rule 3: alphabetical by filename. Convention: `index` sorts first
-      // so a group's landing page shows at the top of its section.
-      ordered = [...bucket].sort((a, b) => {
-        if (a.filename === 'index') return -1;
-        if (b.filename === 'index') return 1;
-        return a.filename.localeCompare(b.filename);
-      });
-    }
+    const orderedNames = orderGroupFilenames(groupId, filenamesPresent, order);
+    const byName = new Map(bucket.map((l) => [l.filename, l] as const));
+    const ordered: Located[] = orderedNames.map((name) => byName.get(name)!);
 
     const items: NavItem[] = ordered.map(({ entry }) => ({
       title: entry.data.title,

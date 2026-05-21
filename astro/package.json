@@ -10,7 +10,11 @@
     "astro": "astro",
     "pagefind": "pagefind --site dist/client",
     "build:all": "astro build && pagefind --site dist/client",
-    "verify:ai": "node scripts/verify-ai/all.mjs"
+    "verify:ai": "node scripts/verify-ai/all.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check:links": "node scripts/check-links.mjs",
+    "check:nav-depth": "node scripts/check-nav-depth.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "13.5.3",
@@ -32,10 +36,14 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
+    "@axe-core/playwright": "^4.11.3",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "4.3.0",
     "pagefind": "1.5.2",
     "tailwindcss": "4.3.0",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.7",
     "wrangler": "4.93.0"
   }
 }
