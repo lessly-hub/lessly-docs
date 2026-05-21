@@ -6,11 +6,21 @@ import Search from './Search.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Footer from './Footer.astro';
 
-// We intentionally do NOT preload font files. With `font-display: optional`,
-// preloads paradoxically hurt LCP — they block the network for the LCP
-// resource. The metric-adjusted `InterFallback` face renders headings
-// instantly with no CLS while Inter loads in the background and applies
-// on the next page-load. See https://web.dev/articles/preload-critical-assets
+// Preload the four above-the-fold woff2 faces so they beat the 100ms
+// font-display:optional block period on cold loads. Measured: without
+// preload, FCP ~376ms and Inter ready ~478ms → fallback wins → users
+// see Arial-with-Inter-metrics on first visit and real Inter on
+// refresh (no CLS, but glyph shape changes between sessions). Preload
+// puts the fonts in flight at HTML-parse time so the cold-load paint
+// uses real Inter too.
+//
+// LCP impact: this site's LCP is text (H1 Inter 800), not an image —
+// the older "preload hurts LCP" warning applied to image-LCP pages,
+// not here.
+import interWeight400 from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
+import interWeight600 from '@fontsource/inter/files/inter-latin-600-normal.woff2?url';
+import interWeight800 from '@fontsource/inter/files/inter-latin-800-normal.woff2?url';
+import firaMono400 from '@fontsource/fira-mono/files/fira-mono-latin-400-normal.woff2?url';
 
 interface Props {
   title: string;
@@ -53,6 +63,10 @@ const ogImage = ogSlug
     </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preload" as="font" type="font/woff2" href={interWeight400} crossorigin="anonymous" />
+    <link rel="preload" as="font" type="font/woff2" href={interWeight600} crossorigin="anonymous" />
+    <link rel="preload" as="font" type="font/woff2" href={interWeight800} crossorigin="anonymous" />
+    <link rel="preload" as="font" type="font/woff2" href={firaMono400} crossorigin="anonymous" />
     <title>{title} — Lessly Docs</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
