@@ -76,6 +76,17 @@ test.describe('Slice 6 — happy-path surfaces', () => {
     // first result anchor to land.
     const result = dialog.locator('a[role="option"]').first();
     await expect(result).toBeVisible({ timeout: 5_000 });
+
+    // Regression: the search input must not paint the global :focus-visible
+    // outline (global.css applies a 2px brand-bright ring to every focused
+    // element by default — fine for buttons, visually wrong inside the
+    // command-palette-style dialog). The dialog + caret are the focus cue.
+    // Tailwind v4's `outline-none` sets outline-style:none (which suppresses
+    // painting); outline-width may still report 2px. Style is what matters.
+    const outlineStyle = await page.locator('#lessly-search-input').evaluate(
+      (el) => getComputedStyle(el).outlineStyle,
+    );
+    expect(outlineStyle).toBe('none');
   });
 
   test('lessly_deploy tool page renders the McpToolCard', async ({ page }) => {
