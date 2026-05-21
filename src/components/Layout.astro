@@ -6,6 +6,12 @@ import Search from './Search.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Footer from './Footer.astro';
 
+// Inter weights used on every page. Importing the raw woff2 here gives
+// Astro a content-hashed asset URL that we preload in the <head> so the
+// font request races with the CSS download — measurably lifts LCP.
+import interLatin400 from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
+import interLatin600 from '@fontsource/inter/files/inter-latin-600-normal.woff2?url';
+
 interface Props {
   title: string;
   description?: string;
@@ -48,6 +54,8 @@ const ogImage = ogSlug
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href={interLatin400} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={interLatin600} as="font" type="font/woff2" crossorigin />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Lessly Docs" />
     <meta property="og:title" content={title} />
@@ -60,14 +68,6 @@ const ogImage = ogSlug
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    <link
-      rel="preconnect"
-      href="https://rsms.me/"
-    />
-    <link
-      rel="stylesheet"
-      href="https://rsms.me/inter/inter.css"
-    />
   </head>
   <body class="flex min-h-screen flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
     <Header />

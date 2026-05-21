@@ -19,6 +19,8 @@
   "dependencies": {
     "@astrojs/cloudflare": "13.5.3",
     "@astrojs/mdx": "5.0.6",
+    "@fontsource/fira-mono": "^5.2.7",
+    "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "@resvg/resvg-js": "^2.6.2",
     "@shikijs/core": "^4.1.0",
