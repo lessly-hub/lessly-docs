@@ -6,11 +6,11 @@ import Search from './Search.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Footer from './Footer.astro';
 
-// Inter weights used on every page. Importing the raw woff2 here gives
-// Astro a content-hashed asset URL that we preload in the <head> so the
-// font request races with the CSS download — measurably lifts LCP.
-import interLatin400 from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
-import interLatin600 from '@fontsource/inter/files/inter-latin-600-normal.woff2?url';
+// We intentionally do NOT preload font files. With `font-display: optional`,
+// preloads paradoxically hurt LCP — they block the network for the LCP
+// resource. The metric-adjusted `InterFallback` face renders headings
+// instantly with no CLS while Inter loads in the background and applies
+// on the next page-load. See https://web.dev/articles/preload-critical-assets
 
 interface Props {
   title: string;
@@ -54,8 +54,6 @@ const ogImage = ogSlug
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preload" href={interLatin400} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={interLatin600} as="font" type="font/woff2" crossorigin />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="Lessly Docs" />
     <meta property="og:title" content={title} />

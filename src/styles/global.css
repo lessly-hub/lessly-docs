@@ -12,56 +12,56 @@
   src: url("@fontsource/inter/files/inter-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Inter";
   src: url("@fontsource/inter/files/inter-latin-500-normal.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Inter";
   src: url("@fontsource/inter/files/inter-latin-600-normal.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Inter";
   src: url("@fontsource/inter/files/inter-latin-700-normal.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Inter";
   src: url("@fontsource/inter/files/inter-latin-800-normal.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Instrument Serif";
   src: url("@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Fira Mono";
   src: url("@fontsource/fira-mono/files/fira-mono-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: "Fira Mono";
   src: url("@fontsource/fira-mono/files/fira-mono-latin-500-normal.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 /*
