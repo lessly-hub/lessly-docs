@@ -28,12 +28,9 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { parseMcpTools } from './mcp-tools';
 
-export type NavStatus = 'alpha' | 'beta' | 'stable';
-
 export interface NavItem {
   title: string;
   href: string;
-  status?: NavStatus;
 }
 
 export interface NavGroup {
@@ -190,7 +187,6 @@ export async function getNav(): Promise<NavGroup[]> {
     const items: NavItem[] = ordered.map(({ entry }) => ({
       title: entry.data.title,
       href: entryHref(entry),
-      ...(entry.data.status ? { status: entry.data.status } : {}),
     }));
 
     // Slice 4: the MCP tools catalog is data-driven from
@@ -204,7 +200,6 @@ export async function getNav(): Promise<NavGroup[]> {
         const toolItems: NavItem[] = parseMcpTools().tools.map((tool) => ({
           title: tool.name,
           href: `/docs/reference/tools/${tool.name}`,
-          status: 'alpha',
         }));
         items.splice(toolsIdx + 1, 0, ...toolItems);
       }

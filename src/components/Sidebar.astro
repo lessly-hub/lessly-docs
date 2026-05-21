@@ -11,7 +11,7 @@
  *
  * No React. Inline vanilla TS at the bottom of the file (no separate island).
  */
-import { getNav, type NavStatus } from '@/lib/nav';
+import { getNav } from '@/lib/nav';
 
 interface Props {
   currentPath?: string;
@@ -31,12 +31,6 @@ const activeGroupId = (() => {
   const match = normalizedPath.match(/^\/docs\/([^/]+)/);
   return match ? match[1] : '';
 })();
-
-const statusPillStyles: Record<NavStatus, string> = {
-  alpha: 'border-[var(--color-border-warning)] text-[var(--color-text-warning)]',
-  beta: 'border-[var(--color-border-brand)] text-[var(--color-text-brand)]',
-  stable: 'border-[var(--color-border-success)] text-[var(--color-text-success)]',
-};
 ---
 
 <aside
@@ -94,16 +88,6 @@ const statusPillStyles: Record<NavStatus, string> = {
                     ]}
                   >
                     <span class="flex-1 truncate">{item.title}</span>
-                    {item.status && (
-                      <span
-                        class:list={[
-                          'inline-flex items-center rounded-full border px-1.5 text-[10px] font-medium uppercase tracking-[0.04em]',
-                          statusPillStyles[item.status],
-                        ]}
-                      >
-                        {item.status}
-                      </span>
-                    )}
                   </a>
                 </li>
               );
