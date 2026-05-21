@@ -21,3 +21,6 @@ export { default as CodeBlock } from './CodeBlock.astro';
 export { default as Tabs } from './Tabs.astro';
 export { default as Tab } from './Tab.astro';
 export { default as OpenInClaude } from './OpenInClaude.astro';
+export { default as McpToolCard } from './McpToolCard.astro';
+export { default as AgentTranscript } from './AgentTranscript.astro';
+export { default as Turn } from './Turn.astro';

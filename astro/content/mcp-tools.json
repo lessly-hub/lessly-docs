@@ -1,0 +1,131 @@
+{
+  "version": "2026-05-21",
+  "tools": [
+    {
+      "name": "lessly_deploy",
+      "summary": "Build and deploy a git ref to a Lessly environment.",
+      "description": "Triggers a build of the specified git ref and promotes the resulting artifact to the target environment. Returns a deployment id you can poll with lessly_get_deployment or stream logs from with lessly_get_logs.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app to deploy (matches the name in your workspace)." },
+        { "name": "ref", "type": "string", "required": false, "description": "Git ref — branch name, tag, or commit SHA. Defaults to the app's default branch.", "default": "main" },
+        { "name": "environment", "type": "\"production\" | \"staging\" | \"preview\"", "required": false, "description": "Target environment. Preview deploys get a unique URL; production replaces the live URL after the health check passes.", "default": "preview" },
+        { "name": "wait", "type": "boolean", "required": false, "description": "If true, the tool returns only after the deployment reaches a terminal state (ready or failed). If false, returns as soon as the build is queued.", "default": "false" }
+      ],
+      "example": {
+        "prompt": "Deploy the main branch of acme-store to production and wait for it to go live.",
+        "args": { "app": "acme-store", "ref": "main", "environment": "production", "wait": true }
+      },
+      "related": ["reference/tools/lessly_get_deployment", "reference/tools/lessly_get_logs", "reference/tools/lessly_rollback"]
+    },
+    {
+      "name": "lessly_get_deployment",
+      "summary": "Fetch the status and metadata of a single deployment.",
+      "description": "Returns the current state (queued, building, deploying, ready, failed, canceled), the build duration, the commit metadata, and the URL of the deployment. Use this to poll a deployment kicked off without wait=true.",
+      "args": [
+        { "name": "deployment_id", "type": "string", "required": true, "description": "Id returned by lessly_deploy or lessly_list_deployments." }
+      ],
+      "example": {
+        "prompt": "Check the status of deployment dpl_8x2k.",
+        "args": { "deployment_id": "dpl_8x2k" }
+      },
+      "related": ["reference/tools/lessly_deploy", "reference/tools/lessly_list_deployments", "reference/tools/lessly_get_logs"]
+    },
+    {
+      "name": "lessly_list_deployments",
+      "summary": "List recent deployments for an app, newest first.",
+      "description": "Returns up to limit deployments for the given app, sorted by created_at descending. Filter by environment to scope the list (for example, only production deploys) or by status to find the last successful build.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
+        { "name": "environment", "type": "\"production\" | \"staging\" | \"preview\"", "required": false, "description": "Restrict results to one environment." },
+        { "name": "status", "type": "\"ready\" | \"failed\" | \"building\" | \"canceled\"", "required": false, "description": "Restrict results to one terminal or in-flight state." },
+        { "name": "limit", "type": "number", "required": false, "description": "Maximum number of deployments to return. Capped at 100.", "default": "20" }
+      ],
+      "example": {
+        "prompt": "Show me the last 5 production deployments of acme-store.",
+        "args": { "app": "acme-store", "environment": "production", "limit": 5 }
+      },
+      "related": ["reference/tools/lessly_get_deployment", "reference/tools/lessly_rollback"]
+    },
+    {
+      "name": "lessly_get_logs",
+      "summary": "Read build or runtime logs for a deployment.",
+      "description": "Returns log lines for the given deployment, scoped to either the build phase or the runtime worker. Supports follow=true for live tailing while a build is in progress.",
+      "args": [
+        { "name": "deployment_id", "type": "string", "required": true, "description": "Id of the deployment to read logs from." },
+        { "name": "source", "type": "\"build\" | \"runtime\"", "required": false, "description": "Which log stream to read. build covers the build step; runtime covers requests served by the deployment.", "default": "runtime" },
+        { "name": "since", "type": "string", "required": false, "description": "ISO-8601 timestamp or relative duration like 15m or 2h. Lines older than this are dropped." },
+        { "name": "follow", "type": "boolean", "required": false, "description": "Stream new lines as they arrive instead of returning a single snapshot.", "default": "false" },
+        { "name": "limit", "type": "number", "required": false, "description": "Maximum number of lines to return when follow is false. Capped at 1000.", "default": "200" }
+      ],
+      "example": {
+        "prompt": "Tail the runtime logs for deployment dpl_8x2k for the last 15 minutes.",
+        "args": { "deployment_id": "dpl_8x2k", "source": "runtime", "since": "15m", "follow": true }
+      },
+      "related": ["reference/tools/lessly_get_deployment", "reference/tools/lessly_list_deployments"]
+    },
+    {
+      "name": "lessly_set_env",
+      "summary": "Create or update an environment variable on an app.",
+      "description": "Writes a single env var to the app. Marking secret=true encrypts the value at rest and redacts it in logs and tool output. The change applies on the next deployment unless redeploy=true is set.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
+        { "name": "key", "type": "string", "required": true, "description": "Env var name. Must match /^[A-Z_][A-Z0-9_]*$/." },
+        { "name": "value", "type": "string", "required": true, "description": "Value to store. Pass an empty string to set the var to empty; use lessly_list_envs and the workspace UI to delete." },
+        { "name": "environment", "type": "\"production\" | \"staging\" | \"preview\" | \"all\"", "required": false, "description": "Which environments the var applies to.", "default": "all" },
+        { "name": "secret", "type": "boolean", "required": false, "description": "Encrypt at rest and redact in logs. Default true for keys ending in _KEY, _TOKEN, _SECRET, _PASSWORD.", "default": "false" },
+        { "name": "redeploy", "type": "boolean", "required": false, "description": "Trigger a redeploy of the current production deployment so the new value takes effect immediately.", "default": "false" }
+      ],
+      "example": {
+        "prompt": "Set STRIPE_SECRET_KEY on acme-store in production as a secret and redeploy.",
+        "args": { "app": "acme-store", "key": "STRIPE_SECRET_KEY", "value": "sk_live_…", "environment": "production", "secret": true, "redeploy": true }
+      },
+      "related": ["reference/tools/lessly_list_envs", "reference/tools/lessly_deploy"]
+    },
+    {
+      "name": "lessly_list_envs",
+      "summary": "List environment variables configured on an app.",
+      "description": "Returns the env vars for the given app and environment. Secret values are redacted; only the key, environment, and last-updated timestamp are returned for secrets.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
+        { "name": "environment", "type": "\"production\" | \"staging\" | \"preview\" | \"all\"", "required": false, "description": "Scope the listing to one environment.", "default": "all" },
+        { "name": "include_secrets", "type": "boolean", "required": false, "description": "Include keys flagged as secret. Values remain redacted regardless of this flag.", "default": "true" }
+      ],
+      "example": {
+        "prompt": "List every env var on acme-store in production.",
+        "args": { "app": "acme-store", "environment": "production" }
+      },
+      "related": ["reference/tools/lessly_set_env"]
+    },
+    {
+      "name": "lessly_add_domain",
+      "summary": "Attach a custom domain to an app.",
+      "description": "Registers a custom hostname for the app and returns the DNS records (CNAME or A) you need to add at your registrar. After DNS verification, Lessly provisions a TLS certificate automatically.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
+        { "name": "hostname", "type": "string", "required": true, "description": "Fully-qualified hostname to attach, e.g. www.acme.com or acme.com." },
+        { "name": "environment", "type": "\"production\" | \"staging\"", "required": false, "description": "Which environment the domain serves. Preview deploys keep their auto-generated URLs.", "default": "production" },
+        { "name": "redirect_apex_to_www", "type": "boolean", "required": false, "description": "When hostname is an apex domain, also configure a 308 redirect from apex to www.", "default": "false" }
+      ],
+      "example": {
+        "prompt": "Point www.acme.com at the production deployment of acme-store.",
+        "args": { "app": "acme-store", "hostname": "www.acme.com", "environment": "production" }
+      },
+      "related": ["reference/tools/lessly_list_deployments"]
+    },
+    {
+      "name": "lessly_rollback",
+      "summary": "Promote a previous deployment back to production.",
+      "description": "Re-promotes a known-good deployment to the live URL. No rebuild happens — the existing artifact is re-pointed, so rollback completes in seconds. The current production deployment remains queryable via lessly_list_deployments.",
+      "args": [
+        { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
+        { "name": "deployment_id", "type": "string", "required": false, "description": "Deployment to roll back to. If omitted, rolls back to the most recent ready deployment before the current production one." },
+        { "name": "reason", "type": "string", "required": false, "description": "Free-text note attached to the rollback event for the audit log." }
+      ],
+      "example": {
+        "prompt": "Roll acme-store production back to deployment dpl_7w1j because checkout is broken.",
+        "args": { "app": "acme-store", "deployment_id": "dpl_7w1j", "reason": "Checkout 500s after dpl_8x2k" }
+      },
+      "related": ["reference/tools/lessly_list_deployments", "reference/tools/lessly_get_deployment", "reference/tools/lessly_deploy"]
+    }
+  ]
+}

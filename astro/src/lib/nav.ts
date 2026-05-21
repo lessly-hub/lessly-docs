@@ -26,6 +26,7 @@
  */
 
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { parseMcpTools } from './mcp-tools';
 
 export type NavStatus = 'alpha' | 'beta' | 'stable';
 
@@ -169,15 +170,30 @@ export async function getNav(): Promise<NavGroup[]> {
       });
     }
 
-    groups.push({
-      id: groupId,
-      label,
-      items: ordered.map(({ entry }) => ({
-        title: entry.data.title,
-        href: entryHref(entry),
-        ...(entry.data.status ? { status: entry.data.status } : {}),
-      })),
-    });
+    const items: NavItem[] = ordered.map(({ entry }) => ({
+      title: entry.data.title,
+      href: entryHref(entry),
+      ...(entry.data.status ? { status: entry.data.status } : {}),
+    }));
+
+    // Slice 4: the MCP tools catalog is data-driven from
+    // `content/mcp-tools.json`, not a per-tool `.mdx` file. Inject each
+    // tool as a sidebar item directly after the `tools` index page so
+    // readers see the whole catalog in the Reference section. Pages live
+    // at `/docs/reference/tools/<name>` (see `src/pages/docs/reference/tools/[name].astro`).
+    if (groupId === 'reference') {
+      const toolsIdx = items.findIndex((i) => i.href === '/docs/reference/tools');
+      if (toolsIdx >= 0) {
+        const toolItems: NavItem[] = parseMcpTools().tools.map((tool) => ({
+          title: tool.name,
+          href: `/docs/reference/tools/${tool.name}`,
+          status: 'alpha',
+        }));
+        items.splice(toolsIdx + 1, 0, ...toolItems);
+      }
+    }
+
+    groups.push({ id: groupId, label, items });
   }
 
   return groups;
