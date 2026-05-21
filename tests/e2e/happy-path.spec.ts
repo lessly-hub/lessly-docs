@@ -89,6 +89,43 @@ test.describe('Slice 6 — happy-path surfaces', () => {
     expect(outlineStyle).toBe('none');
   });
 
+  test('code block Copy button gives synchronous feedback and copies source', async ({
+    page,
+  }) => {
+    await page.goto('/docs/get-started/install/');
+
+    // Spy on the clipboard before any click — headless Chromium does not
+    // expose the system clipboard for readback, so we intercept the write.
+    await page.evaluate(() => {
+      (window as unknown as { __copied: string[] }).__copied = [];
+      navigator.clipboard.writeText = (text: string) => {
+        (window as unknown as { __copied: string[] }).__copied.push(text);
+        return Promise.resolve();
+      };
+    });
+
+    const copyButton = page.locator('button.lessly-code__copy').first();
+    await expect(copyButton).toBeVisible();
+    await expect(copyButton).toContainText('Copy');
+
+    await copyButton.click();
+
+    // lessly:ux — every action gets feedback inside ~100ms. The wire-up flips
+    // the label synchronously inside the click handler, so this resolves on
+    // the next microtask, well under the budget.
+    await expect(copyButton).toContainText('Copied', { timeout: 200 });
+
+    // Source must be the decoded text, not the HTML-entity-escaped form the
+    // rehype plugin stamps into the <template> tag.
+    const copied = await page.evaluate(
+      () => (window as unknown as { __copied: string[] }).__copied,
+    );
+    expect(copied.length).toBe(1);
+    expect(copied[0].length).toBeGreaterThan(0);
+    expect(copied[0]).not.toContain('&lt;');
+    expect(copied[0]).not.toContain('&amp;');
+  });
+
   test('lessly_deploy tool page renders the McpToolCard', async ({ page }) => {
     await page.goto('/docs/reference/tools/lessly_deploy/');
     await expect(page.locator('article.lessly-mcp-tool-card')).toHaveCount(1);

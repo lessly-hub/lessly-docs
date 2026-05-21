@@ -533,6 +533,3 @@ body {
 .lessly-code .lessly-code__icon {
   display: inline-flex;
 }
-.lessly-code template.lessly-code__source {
-  display: none;
-}

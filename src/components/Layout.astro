@@ -90,5 +90,11 @@ const ogImage = ogSlug
     )}
     <Footer />
     <Search />
+    <script>
+      // Wire the Copy button on every fenced code block. The CodeBlock Astro
+      // component is never mounted for fenced blocks (rehype emits raw HTML),
+      // so the wire-up has to live at the Layout level to ship at all.
+      import '@/lib/code-copy';
+    </script>
   </body>
 </html>

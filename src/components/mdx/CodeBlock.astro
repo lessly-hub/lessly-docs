@@ -93,6 +93,7 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
           class="lessly-code__copy flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-bright)]"
           data-copy-label="Copy"
           data-copied-label="Copied"
+          data-source={code}
           aria-label="Copy code to clipboard"
         >
           <span class="lessly-code__icon" set:html={copyIcon} />
@@ -103,47 +104,13 @@ const checkIcon = renderIcon(Check as unknown as LucideIcon, {
     </header>
   )}
   <div class="lessly-code__scroll overflow-x-auto" set:html={html} />
-  {/* Raw source for the copy button — never rendered. */}
-  <template class="lessly-code__source">{code}</template>
 </figure>
 
 <!--
-  Styles for .lessly-code live in src/styles/global.css (not here).
-  Reason: fenced ``` blocks are rendered as raw HTML by src/lib/rehype/code.ts
-  without mounting this component, so any `<style is:global>` block here would
-  never bundle on pages that only use fenced blocks. Keep CSS global.
+  Styles for .lessly-code live in src/styles/global.css and the Copy
+  button wire-up lives in src/lib/code-copy.ts (loaded from Layout.astro).
+  Reason: fenced markdown code blocks are rendered as raw HTML by
+  src/lib/rehype/code.ts and never mount this Astro component, so any
+  style or script block here would not bundle on pages that only use
+  fenced markdown blocks.
 -->
-<script>
-  // Vanilla TS — ~20 lines, no framework. Wires up every CodeBlock on the page.
-  function wireCopyButtons() {
-    const blocks = document.querySelectorAll<HTMLElement>('.lessly-code');
-    blocks.forEach((block) => {
-      const button = block.querySelector<HTMLButtonElement>('.lessly-code__copy');
-      const source = block.querySelector<HTMLTemplateElement>('template.lessly-code__source');
-      if (!button || !source || button.dataset.wired === '1') return;
-      button.dataset.wired = '1';
-      const copyIcon = button.querySelector<HTMLElement>('.lessly-code__icon-copy')?.parentElement;
-      const checkIcon = button.querySelector<HTMLElement>('.lessly-code__icon-check')?.parentElement;
-      const label = button.querySelector<HTMLElement>('.lessly-code__copy-label');
-      const copiedLabel = button.dataset.copiedLabel ?? 'Copied';
-      const copyLabel = button.dataset.copyLabel ?? 'Copy';
-      button.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(source.innerHTML);
-          if (label) label.textContent = copiedLabel;
-          if (copyIcon) copyIcon.classList.add('hidden');
-          if (checkIcon) checkIcon.classList.remove('hidden');
-          window.setTimeout(() => {
-            if (label) label.textContent = copyLabel;
-            if (copyIcon) copyIcon.classList.remove('hidden');
-            if (checkIcon) checkIcon.classList.add('hidden');
-          }, 2000);
-        } catch {
-          /* clipboard unavailable */
-        }
-      });
-    });
-  }
-  wireCopyButtons();
-  document.addEventListener('astro:page-load', wireCopyButtons);
-</script>
