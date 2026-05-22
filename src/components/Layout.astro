@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 import Header from './Header.astro';
 import Sidebar from './Sidebar.astro';
+import MobileNav from './MobileNav.astro';
 import Search from './Search.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Footer from './Footer.astro';
@@ -85,7 +86,8 @@ const ogImage = ogSlug
     <meta name="twitter:image" content={ogImage} />
   </head>
   <body class="flex min-h-screen flex-col bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
-    <Header />
+    <Header currentPath={currentPath} />
+    <MobileNav currentPath={currentPath} />
     {bare ? (
       <main class="flex-1">
         <slot />

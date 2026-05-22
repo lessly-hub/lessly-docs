@@ -59,4 +59,12 @@ test.describe('Accessibility (axe-core)', () => {
     });
     await expectNoViolations(page, 'search-modal');
   });
+
+  test('mobile nav drawer (open) is clean', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/docs/get-started/install/');
+    await page.locator('[data-mobile-nav-trigger]').click();
+    await expect(page.locator('dialog#lessly-mobile-nav')).toBeVisible();
+    await expectNoViolations(page, 'mobile-nav');
+  });
 });

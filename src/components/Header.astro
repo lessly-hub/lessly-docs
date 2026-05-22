@@ -1,23 +1,52 @@
 ---
 /**
  * Sticky page header — 56px, blurred, brand bar.
- * S1: visual presence only. ⌘K trigger is a non-functional button (real search lands in S3).
+ *
+ * Section navigation is rendered as **tabs** derived from `getNav()` (the same
+ * source as the sidebar — no hand-maintained link list). The tab for the
+ * current section is marked active. Tabs show at `lg` and up, alongside the
+ * desktop sidebar; below `lg` a hamburger opens the mobile drawer (MobileNav).
  */
 import ThemeToggle from './ThemeToggle.astro';
+import { getNav, activeGroupId, sectionHref } from '@/lib/nav';
 
-const navLinks = [
-  { label: 'Get Started', href: '/docs/get-started/install' },
-  { label: 'Guides', href: '/docs/guides' },
-  { label: 'Concepts', href: '/docs/concepts' },
-  { label: 'Reference', href: '/docs/reference' },
-  { label: 'Changelog', href: '/docs/changelog' },
-];
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '' } = Astro.props;
+const groups = await getNav();
+const activeId = activeGroupId(currentPath);
 ---
 
 <header
   class="sticky top-0 z-50 h-[56px] border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)]/80 backdrop-blur-md"
 >
-  <div class="mx-auto flex h-full max-w-[1400px] items-center gap-8 px-6">
+  <div class="mx-auto flex h-full max-w-[1400px] items-center gap-4 px-6 lg:gap-8">
+    <button
+      type="button"
+      data-mobile-nav-trigger
+      class="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)] lg:hidden"
+      aria-label="Open navigation"
+      aria-haspopup="dialog"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5"
+        aria-hidden="true"
+      >
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+
     <a href="/" class="flex items-center gap-2 text-[var(--color-text-primary)] no-underline">
       <span
         class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-brand-bright)] font-semibold text-[var(--color-text-on-brand)]"
@@ -26,15 +55,24 @@ const navLinks = [
       <span class="font-semibold tracking-tight">Lessly Docs</span>
     </a>
 
-    <nav class="hidden flex-1 items-center gap-6 md:flex" aria-label="Primary">
-      {navLinks.map((link) => (
-        <a
-          href={link.href}
-          class="text-sm text-[var(--color-text-secondary)] no-underline transition-colors hover:text-[var(--color-text-primary)]"
-        >
-          {link.label}
-        </a>
-      ))}
+    <nav class="hidden flex-1 items-center gap-6 lg:flex" aria-label="Primary">
+      {groups.map((group) => {
+        const active = group.id === activeId;
+        return (
+          <a
+            href={sectionHref(group)}
+            aria-current={active ? 'page' : undefined}
+            class:list={[
+              'text-sm no-underline transition-colors',
+              active
+                ? 'text-[var(--color-text-primary)] font-medium'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+            ]}
+          >
+            {group.label}
+          </a>
+        );
+      })}
     </nav>
 
     <div class="ml-auto flex items-center gap-3">

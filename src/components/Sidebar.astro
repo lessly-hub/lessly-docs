@@ -1,17 +1,14 @@
 ---
 /**
- * Sidebar (Slice 3).
+ * Desktop sidebar (scoped-tab navigation).
  *
- * - Renders the full nav tree from `getNav()`.
- * - 280 px, sticky under the 56 px header, scrollable.
- * - Each group is collapsible. The group containing the current page starts
- *   expanded; others start collapsed (unless localStorage has a per-group
- *   override).
- * - State persists to `localStorage` per group: `lessly-docs:sidebar:<group-id>`.
- *
- * No React. Inline vanilla TS at the bottom of the file (no separate island).
+ * Renders ONLY the active section's pages as a flat list — the section is
+ * chosen by the current path (`activeGroupId`), falling back to the first
+ * group. Section switching lives in the header tabs; the full multi-section
+ * tree lives in the mobile drawer (MobileNav). 280px, sticky under the 56px
+ * header, scrollable. No collapse state, no client script.
  */
-import { getNav } from '@/lib/nav';
+import { getNav, activeGroupId } from '@/lib/nav';
 
 interface Props {
   currentPath?: string;
@@ -20,141 +17,39 @@ interface Props {
 const { currentPath = '' } = Astro.props;
 const groups = await getNav();
 
-// Normalize to a single canonical form so the active-item test matches
-// regardless of whether the URL came in with or without a trailing slash.
-// Astro emits `/docs/<slug>/` for pages but nav items are stored without
-// the trailing slash; without this step every page renders with no
-// visible active state.
+// Normalize so the active test matches regardless of trailing slash.
 const normalizedPath = currentPath.replace(/\/$/, '');
-
-const activeGroupId = (() => {
-  const match = normalizedPath.match(/^\/docs\/([^/]+)/);
-  return match ? match[1] : '';
-})();
+const activeId = activeGroupId(normalizedPath);
+const activeGroup = groups.find((g) => g.id === activeId) ?? groups[0];
 ---
 
 <aside
   class="sticky top-[56px] hidden h-[calc(100vh-56px)] w-[280px] shrink-0 overflow-y-auto border-r border-[var(--color-border-subtle)] lg:block"
-  aria-label="Sidebar navigation"
+  aria-label="Section navigation"
 >
-  <nav class="px-4 py-6" data-sidebar-nav>
-    {groups.map((group) => {
-      const isActiveGroup = group.id === activeGroupId;
-      return (
-        <div
-          class="mb-6"
-          data-sidebar-group
-          data-group-id={group.id}
-          data-initial-expanded={isActiveGroup ? 'true' : 'false'}
-        >
-          <button
-            type="button"
-            data-sidebar-toggle
-            aria-expanded={isActiveGroup ? 'true' : 'false'}
-            aria-controls={`sidebar-group-${group.id}`}
-            class="mb-2 flex w-full items-center justify-between px-2 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-secondary)]"
-          >
-            <span>{group.label}</span>
-            <svg
-              data-sidebar-chevron
-              class="h-3 w-3 transition-transform duration-150"
-              viewBox="0 0 12 12"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              aria-hidden="true"
-            >
-              <path d="M3 4.5 6 7.5l3-3" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </button>
-          <ul
-            id={`sidebar-group-${group.id}`}
-            data-sidebar-list
-            class="m-0 list-none p-0"
-            hidden={!isActiveGroup}
-          >
-            {group.items.map((item) => {
-              const active = normalizedPath === item.href;
-              return (
-                <li>
-                  <a
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    class:list={[
-                      'flex h-8 items-center gap-2 rounded-md px-2 py-3 text-sm no-underline transition-colors',
-                      active
-                        ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]'
-                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
-                    ]}
-                  >
-                    <span class="flex-1 truncate">{item.title}</span>
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      );
-    })}
-  </nav>
+  {activeGroup && (
+    <nav class="px-4 py-6">
+      <ul class="m-0 list-none p-0">
+        {activeGroup.items.map((item) => {
+          const active = normalizedPath === item.href;
+          return (
+            <li>
+              <a
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                class:list={[
+                  'flex h-8 items-center gap-2 rounded-md px-2 py-3 text-sm no-underline transition-colors',
+                  active
+                    ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                ]}
+              >
+                <span class="flex-1 truncate">{item.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  )}
 </aside>
-
-<script>
-  // Sidebar collapse/expand — per-group persistence in localStorage.
-  // Storage key: `lessly-docs:sidebar:<group-id>`, value: 'open' | 'closed'.
-  type GroupState = 'open' | 'closed';
-  const STORAGE_PREFIX = 'lessly-docs:sidebar:';
-
-  function setExpanded(group: HTMLElement, expanded: boolean): void {
-    const button = group.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
-    const list = group.querySelector<HTMLElement>('[data-sidebar-list]');
-    const chevron = group.querySelector<SVGElement>('[data-sidebar-chevron]');
-    if (!button || !list) return;
-    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    if (expanded) list.removeAttribute('hidden');
-    else list.setAttribute('hidden', '');
-    if (chevron) {
-      (chevron as unknown as { style: CSSStyleDeclaration }).style.transform =
-        expanded ? 'rotate(0deg)' : 'rotate(-90deg)';
-    }
-  }
-
-  function readStored(groupId: string): GroupState | null {
-    try {
-      const v = localStorage.getItem(STORAGE_PREFIX + groupId);
-      return v === 'open' || v === 'closed' ? v : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function writeStored(groupId: string, state: GroupState): void {
-    try {
-      localStorage.setItem(STORAGE_PREFIX + groupId, state);
-    } catch {
-      // no-op (private mode etc.)
-    }
-  }
-
-  function initGroup(group: HTMLElement): void {
-    const groupId = group.dataset.groupId ?? '';
-    const initial = group.dataset.initialExpanded === 'true';
-    const stored = readStored(groupId);
-    const expanded = stored ? stored === 'open' : initial;
-    setExpanded(group, expanded);
-
-    const button = group.querySelector<HTMLButtonElement>('[data-sidebar-toggle]');
-    if (!button) return;
-    button.addEventListener('click', () => {
-      const current = button.getAttribute('aria-expanded') === 'true';
-      const next = !current;
-      setExpanded(group, next);
-      writeStored(groupId, next ? 'open' : 'closed');
-    });
-  }
-
-  const nav = document.querySelector<HTMLElement>('[data-sidebar-nav]');
-  if (nav) {
-    nav.querySelectorAll<HTMLElement>('[data-sidebar-group]').forEach(initGroup);
-  }
-</script>
