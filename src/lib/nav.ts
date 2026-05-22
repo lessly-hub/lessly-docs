@@ -44,6 +44,31 @@ interface GroupsConfig {
   labels: Record<string, string>;
 }
 
+/**
+ * The group id for a docs pathname, or `''` when the path is not under
+ * `/docs/<group>`. Pure string logic shared by the header tabs, the desktop
+ * sidebar, and the mobile drawer so "active section" is computed identically
+ * everywhere. A trailing slash is ignored (Astro emits `/docs/<slug>/`).
+ *
+ *   `/docs/guides/webhooks` → `guides`
+ *   `/docs/guides`          → `guides`
+ *   `/docs` | `/`           → `''`
+ */
+export function activeGroupId(path: string): string {
+  const match = path.replace(/\/$/, '').match(/^\/docs\/([^/]+)/);
+  return match ? match[1] : '';
+}
+
+/**
+ * The landing URL for a section: the group's index page (`/docs/<id>`) when it
+ * exists, otherwise the first item. Returns `''` for an empty group.
+ */
+export function sectionHref(group: NavGroup): string {
+  const landing = `/docs/${group.id}`;
+  const index = group.items.find((item) => item.href === landing);
+  return index?.href ?? group.items[0]?.href ?? '';
+}
+
 // Eager-glob every JSON under content/docs/.
 const jsonModules = import.meta.glob<unknown>('/content/docs/**/*.json', {
   eager: true,

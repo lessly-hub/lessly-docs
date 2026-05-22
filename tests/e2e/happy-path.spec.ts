@@ -22,9 +22,11 @@ test.describe('Slice 6 — happy-path surfaces', () => {
     const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
     expect(response?.ok()).toBeTruthy();
 
-    // The S1 root is a meta-refresh redirector. Wait for either the explicit
-    // link or the post-refresh URL — whichever the browser resolves first.
-    const installLink = page.locator('a[href="/docs/get-started/install"]');
+    // Scope to the hero CTA in <main>: the global mobile-nav drawer also
+    // carries an (initially hidden) install link, so an unscoped locator would
+    // match that first. The homepage's own "Get started" CTA is the surface
+    // under test.
+    const installLink = page.locator('main a[href="/docs/get-started/install"]');
     await expect(installLink.first()).toBeVisible({ timeout: 10_000 });
 
     await installLink.first().click();
@@ -32,17 +34,29 @@ test.describe('Slice 6 — happy-path surfaces', () => {
     await expect(page.locator('h1')).toContainText(/install/i);
   });
 
-  test('install page renders sidebar (5 groups), breadcrumbs, and TOC contract', async ({
+  test('install page: header tabs (5, active section), scoped sidebar, breadcrumbs, TOC', async ({
     page,
   }) => {
     await page.goto('/docs/get-started/install/');
 
-    // Sidebar exists with all five top-level groups labelled per _groups.json.
-    const sidebar = page.locator('nav, aside').filter({ hasText: 'Get Started' }).first();
-    await expect(sidebar).toBeVisible();
+    // Scoped-tab nav: the five sections live in the header as tabs (per
+    // _groups.json), and the tab for the current section is marked active.
+    const tabs = page.locator('nav[aria-label="Primary"] a');
+    await expect(tabs).toHaveCount(5);
     for (const label of ['Get Started', 'Guides', 'Concepts', 'Reference', 'Changelog']) {
-      await expect(sidebar.getByText(label, { exact: false }).first()).toBeVisible();
+      await expect(tabs.filter({ hasText: label })).toHaveCount(1);
     }
+    await expect(page.locator('nav[aria-label="Primary"] a[aria-current="page"]')).toContainText(
+      'Get Started',
+    );
+
+    // The desktop sidebar is scoped to the active section: it lists Get
+    // Started's pages and NOT the other sections' landings.
+    const sidebar = page.locator('aside[aria-label="Section navigation"]');
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar.locator('a[href="/docs/get-started/install"]')).toBeVisible();
+    await expect(sidebar.locator('a[href="/docs/guides"]')).toHaveCount(0);
+    await expect(sidebar.locator('a[href="/docs/concepts"]')).toHaveCount(0);
 
     // Breadcrumbs are present.
     await expect(page.locator('nav[aria-label*="readcrumb" i], ol[aria-label*="readcrumb" i]')).toHaveCount(
@@ -58,6 +72,34 @@ test.describe('Slice 6 — happy-path surfaces', () => {
     } else {
       expect(await tocItems.count()).toBe(0);
     }
+  });
+
+  test('mobile drawer exposes every section and closes on navigation', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/docs/get-started/install/');
+
+    // Below `lg` the tabs + desktop sidebar are hidden; the hamburger is the
+    // only nav entry point and the drawer starts closed.
+    const drawer = page.locator('dialog#lessly-mobile-nav');
+    await expect(drawer).toBeHidden();
+
+    await page.locator('[data-mobile-nav-trigger]').click();
+    await expect(drawer).toBeVisible();
+
+    // All five section labels are present (group toggles stay visible even
+    // when a group is collapsed).
+    for (const label of ['Get Started', 'Guides', 'Concepts', 'Reference', 'Changelog']) {
+      await expect(drawer.getByText(label, { exact: false }).first()).toBeVisible();
+    }
+
+    // The active section starts expanded — its pages are reachable.
+    const next = drawer.locator('a[href="/docs/get-started/next-steps"]');
+    await expect(next).toBeVisible();
+
+    // Navigating closes the drawer.
+    await next.click();
+    await page.waitForURL(/\/docs\/get-started\/next-steps\/?$/, { timeout: 10_000 });
+    await expect(drawer).toBeHidden();
   });
 
   test('⌘K opens the search modal and types-to-results', async ({ page, browserName }) => {

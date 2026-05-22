@@ -4,7 +4,8 @@
  * Astro build + Playwright e2e suite (sidebar rendering).
  */
 import { describe, it, expect } from 'vitest';
-import { orderGroupFilenames } from '@/lib/nav';
+import { orderGroupFilenames, activeGroupId, sectionHref } from '@/lib/nav';
+import type { NavGroup } from '@/lib/nav';
 
 describe('orderGroupFilenames', () => {
   describe('with _order.json', () => {
@@ -50,5 +51,52 @@ describe('orderGroupFilenames', () => {
       // Remaining items keep alphabetical order.
       expect(out.slice(1)).toEqual(['first-deploy', 'install', 'next-steps']);
     });
+  });
+});
+
+describe('activeGroupId', () => {
+  it('extracts the group from a nested page path', () => {
+    expect(activeGroupId('/docs/guides/webhooks')).toBe('guides');
+  });
+
+  it('extracts the group from a section landing path', () => {
+    expect(activeGroupId('/docs/guides')).toBe('guides');
+  });
+
+  it('ignores a trailing slash', () => {
+    expect(activeGroupId('/docs/guides/')).toBe('guides');
+  });
+
+  it('returns "" for paths outside /docs/<group>', () => {
+    expect(activeGroupId('/')).toBe('');
+    expect(activeGroupId('/docs')).toBe('');
+    expect(activeGroupId('/docs/')).toBe('');
+  });
+});
+
+describe('sectionHref', () => {
+  const item = (title: string, href: string) => ({ title, href });
+
+  it('returns the index landing when the group has one', () => {
+    const group: NavGroup = {
+      id: 'guides',
+      label: 'Guides',
+      items: [item('Guides', '/docs/guides'), item('Webhooks', '/docs/guides/webhooks')],
+    };
+    expect(sectionHref(group)).toBe('/docs/guides');
+  });
+
+  it('falls back to the first item when there is no index landing', () => {
+    const group: NavGroup = {
+      id: 'guides',
+      label: 'Guides',
+      items: [item('Webhooks', '/docs/guides/webhooks'), item('Auth', '/docs/guides/auth')],
+    };
+    expect(sectionHref(group)).toBe('/docs/guides/webhooks');
+  });
+
+  it('returns "" for an empty group', () => {
+    const group: NavGroup = { id: 'guides', label: 'Guides', items: [] };
+    expect(sectionHref(group)).toBe('');
   });
 });

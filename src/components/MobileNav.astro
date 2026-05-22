@@ -1,0 +1,222 @@
+---
+/**
+ * Mobile navigation drawer (scoped-tab navigation, < lg).
+ *
+ * Below the `lg` breakpoint the header tabs and the desktop sidebar are hidden,
+ * so this drawer is the only doc navigation. It holds the FULL collapsible nav
+ * tree — every section plus its pages — opened by the header hamburger
+ * (`[data-mobile-nav-trigger]`).
+ *
+ * Built on a native `<dialog>` (showModal) for a free focus trap + Esc-to-close,
+ * mirroring `Search.astro`. The per-group collapse + localStorage persistence is
+ * the logic relocated from the old multi-section sidebar; the active section
+ * starts expanded.
+ */
+import { getNav, activeGroupId } from '@/lib/nav';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '' } = Astro.props;
+const groups = await getNav();
+
+const normalizedPath = currentPath.replace(/\/$/, '');
+const activeId = activeGroupId(normalizedPath);
+---
+
+<dialog
+  id="lessly-mobile-nav"
+  class="m-0 bg-[var(--color-bg-primary)] p-0 text-[var(--color-text-primary)] shadow-2xl backdrop:bg-black/60"
+  aria-label="Navigation"
+>
+  <div class="flex h-full flex-col">
+    <div class="flex h-[56px] shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
+      <span class="font-semibold tracking-tight">Lessly Docs</span>
+      <button
+        type="button"
+        data-mobile-nav-close
+        class="inline-flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]"
+        aria-label="Close navigation"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-5 w-5"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-4 py-6" data-mobile-nav>
+      {groups.map((group) => {
+        const isActiveGroup = group.id === activeId;
+        return (
+          <div
+            class="mb-6"
+            data-mobile-group
+            data-group-id={group.id}
+            data-initial-expanded={isActiveGroup ? 'true' : 'false'}
+          >
+            <button
+              type="button"
+              data-mobile-toggle
+              aria-expanded={isActiveGroup ? 'true' : 'false'}
+              aria-controls={`mobile-group-${group.id}`}
+              class="mb-2 flex w-full items-center justify-between px-2 text-xs font-semibold uppercase tracking-[0.04em] text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-secondary)]"
+            >
+              <span>{group.label}</span>
+              <svg
+                data-mobile-chevron
+                class="h-3 w-3 transition-transform duration-150"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                aria-hidden="true"
+              >
+                <path d="M3 4.5 6 7.5l3-3" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <ul
+              id={`mobile-group-${group.id}`}
+              data-mobile-list
+              class="m-0 list-none p-0"
+              hidden={!isActiveGroup}
+            >
+              {group.items.map((item) => {
+                const active = normalizedPath === item.href;
+                return (
+                  <li>
+                    <a
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      class:list={[
+                        'flex h-8 items-center gap-2 rounded-md px-2 py-3 text-sm no-underline transition-colors',
+                        active
+                          ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]'
+                          : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                      ]}
+                    >
+                      <span class="flex-1 truncate">{item.title}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </nav>
+  </div>
+</dialog>
+
+<style>
+  /* Pin the drawer to the left edge, full viewport height (a slide-in panel
+     rather than the centered default <dialog>). Plain dark backdrop — no
+     backdrop-filter, which is the documented cause of the search-modal open
+     flicker. */
+  dialog#lessly-mobile-nav[open] {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: min(20rem, 85vw);
+    margin: 0;
+    border-radius: 0;
+  }
+</style>
+
+<script>
+  // Mobile drawer: open/close + per-group collapse with localStorage
+  // persistence (relocated from the old multi-section sidebar). Storage key:
+  // `lessly-docs:sidebar:<group-id>`, value: 'open' | 'closed'.
+  type GroupState = 'open' | 'closed';
+  const STORAGE_PREFIX = 'lessly-docs:sidebar:';
+
+  const dialog = document.getElementById('lessly-mobile-nav') as HTMLDialogElement | null;
+  const nav = dialog?.querySelector<HTMLElement>('[data-mobile-nav]') ?? null;
+
+  function setExpanded(group: HTMLElement, expanded: boolean): void {
+    const button = group.querySelector<HTMLButtonElement>('[data-mobile-toggle]');
+    const list = group.querySelector<HTMLElement>('[data-mobile-list]');
+    const chevron = group.querySelector<SVGElement>('[data-mobile-chevron]');
+    if (!button || !list) return;
+    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (expanded) list.removeAttribute('hidden');
+    else list.setAttribute('hidden', '');
+    if (chevron) {
+      (chevron as unknown as { style: CSSStyleDeclaration }).style.transform = expanded
+        ? 'rotate(0deg)'
+        : 'rotate(-90deg)';
+    }
+  }
+
+  function readStored(groupId: string): GroupState | null {
+    try {
+      const v = localStorage.getItem(STORAGE_PREFIX + groupId);
+      return v === 'open' || v === 'closed' ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStored(groupId: string, state: GroupState): void {
+    try {
+      localStorage.setItem(STORAGE_PREFIX + groupId, state);
+    } catch {
+      // no-op (private mode etc.)
+    }
+  }
+
+  function initGroup(group: HTMLElement): void {
+    const groupId = group.dataset.groupId ?? '';
+    const initial = group.dataset.initialExpanded === 'true';
+    const stored = readStored(groupId);
+    setExpanded(group, stored ? stored === 'open' : initial);
+
+    const button = group.querySelector<HTMLButtonElement>('[data-mobile-toggle]');
+    if (!button) return;
+    button.addEventListener('click', () => {
+      const next = button.getAttribute('aria-expanded') !== 'true';
+      setExpanded(group, next);
+      writeStored(groupId, next ? 'open' : 'closed');
+    });
+  }
+
+  if (dialog && nav) {
+    nav.querySelectorAll<HTMLElement>('[data-mobile-group]').forEach(initGroup);
+
+    const open = () => {
+      if (!dialog.open) dialog.showModal();
+    };
+    const close = () => {
+      if (dialog.open) dialog.close();
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-mobile-nav-trigger]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        open();
+      });
+    });
+
+    dialog.querySelector('[data-mobile-nav-close]')?.addEventListener('click', close);
+
+    // Backdrop click (the <dialog> fills the backdrop; clicks on it close).
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) close();
+    });
+
+    // Navigating closes the drawer.
+    nav.querySelectorAll('a[href]').forEach((a) => a.addEventListener('click', close));
+  }
+</script>
