@@ -6,14 +6,15 @@ If you are an AI agent (Claude Code, Codex, Cursor, Gemini, Copilot) working in 
 
 The full design and rationale live in [`docs/superpowers/specs/2026-05-21-docs-rewrite-design.md`](./docs/superpowers/specs/2026-05-21-docs-rewrite-design.md).
 
-## The three load-bearing rules
+## The four load-bearing rules
 
 1. **"Extension" is a builder concept. It NEVER appears in customer-facing content.**
    The Lessly platform is presented as one coherent product with feature areas (Deployment, Security). Internal terms like `lessly-deployment-extension` repo name stay in the codebase; they do not appear in `content/`.
 2. **"Dev Console" is an internal system. It NEVER appears in customer-facing content.**
 3. **No customer CLI exists today.** Lessly is consumed via (a) web sign-up at lessly.com and (b) the Lessly MCP server installed into the customer's AI agent (Claude Desktop, Cursor, VS Code, …). Do not document a CLI. Do not pretend one exists. **`MCP` is NOT banned** — it's the customer's install path and must be discussed plainly.
+4. **Page-maturity status NEVER renders on the customer surface.** The `status: alpha | beta | stable` frontmatter field is a hidden editorial mark for writers and reviewers — it is required in the schema so every page declares its lifecycle stage, but it MUST NOT be rendered as a pill, badge, banner, or any other visible indicator on docs.lessly.com. Surfacing "alpha"/"beta" to readers undermines trust in the product (they infer the whole product is half-finished). If a page is genuinely not ready, signal it in prose ("This page is a stub. The full how-to lands in the next docs cycle.") — that pattern is already established. See the comment in `src/components/PageMeta.astro` for the load-bearing intent. If the spec doc disagrees, the spec doc is wrong and should be amended.
 
-The CI lint at `.github/workflows/ci.yml` (`lint` job) enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rule 3 is enforced by review.
+The CI lint at `.github/workflows/ci.yml` (`lint` job) enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rules 3 and 4 are enforced by review.
 
 ## Choose a page type before writing
 
