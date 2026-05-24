@@ -63,6 +63,12 @@ Run these against the Cloudflare Workers preview URL (or `http://localhost:4321/
 
 The Diátaxis + banned-vocab + brand-tokens checks already live in [`agents/review-docs-pr.md`](./agents/review-docs-pr.md) and the PR template — the table above only adds the *automated* / *skill-driven* audits.
 
+These three gates are surfaced in two places by design:
+- [`.github/ISSUE_TEMPLATE.md`](./.github/ISSUE_TEMPLATE.md) lists them in **Definition of Done** — the issue sets the contract for what "done" looks like before work starts.
+- [`.github/pull_request_template.md`](./.github/pull_request_template.md) lists them as a receipt — the PR author confirms each gate ran against the preview URL.
+
+The duplication is intentional: the issue says *"this must hold before we close"*; the PR says *"I confirmed it holds."*
+
 ## When in doubt
 
 - Page-type questions → `agents/new-docs-page.md`
