@@ -6,14 +6,15 @@ If you are an AI agent (Claude Code, Codex, Cursor, Gemini, Copilot) working in 
 
 The full design and rationale live in [`docs/superpowers/specs/2026-05-21-docs-rewrite-design.md`](./docs/superpowers/specs/2026-05-21-docs-rewrite-design.md).
 
-## The three load-bearing rules
+## The four load-bearing rules
 
 1. **"Extension" is a builder concept. It NEVER appears in customer-facing content.**
    The Lessly platform is presented as one coherent product with feature areas (Deployment, Security). Internal terms like `lessly-deployment-extension` repo name stay in the codebase; they do not appear in `content/`.
 2. **"Dev Console" is an internal system. It NEVER appears in customer-facing content.**
 3. **No customer CLI exists today.** Lessly is consumed via (a) web sign-up at lessly.com and (b) the Lessly MCP server installed into the customer's AI agent (Claude Desktop, Cursor, VS Code, …). Do not document a CLI. Do not pretend one exists. **`MCP` is NOT banned** — it's the customer's install path and must be discussed plainly.
+4. **Page-maturity status NEVER renders on the customer surface.** The `status: alpha | beta | stable` frontmatter field is a hidden editorial mark for writers and reviewers — it is required in the schema so every page declares its lifecycle stage, but it MUST NOT be rendered as a pill, badge, banner, or any other visible indicator on docs.lessly.com. Surfacing "alpha"/"beta" to readers undermines trust in the product (they infer the whole product is half-finished). If a page is genuinely not ready, signal it in prose ("This page is a stub. The full how-to lands in the next docs cycle.") — that pattern is already established. See the comment in `src/components/PageMeta.astro` for the load-bearing intent. If the spec doc disagrees, the spec doc is wrong and should be amended.
 
-The CI lint at `.github/workflows/ci.yml` (`lint` job) enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rule 3 is enforced by review.
+The CI lint at `.github/workflows/ci.yml` (`lint` job) enforces rules 1 and 2 by grepping `content/`. A PR with `extension` or `Dev Console` will fail. Rules 3 and 4 are enforced by review.
 
 ## Choose a page type before writing
 
@@ -47,6 +48,20 @@ pnpm check:nav-depth    # depth lint for content/docs
 pnpm test:e2e           # Playwright happy-path + axe a11y
 pnpm verify:ai          # AI surface checks (needs a running preview server)
 ```
+
+For the full local QA workflow (dev server, browser, all gates), see [`agents/run-local.md`](./agents/run-local.md).
+
+## Pre-merge gates
+
+Run these against the Cloudflare Workers preview URL (or `http://localhost:4321/` for local) before requesting review. Each one catches a different class of regression that the unit suite and `pnpm build` won't.
+
+| Gate | Skill / trigger | What it catches |
+|------|-----------------|-----------------|
+| **Visual conformance** | `/lessly:design audit <url>` | Hardcoded hex colors, off-token spacing, type-scale violations, contrast failures against brand tokens. |
+| **UX rules** | `/lessly:ux audit <url>` | Cognitive load, dead-end pages, missing states (loading / empty / error), CTA clarity, error copy, agent-surface contract. 23 rules, PASS/FAIL per rule. |
+| **Runtime errors** | `/lessly:errors audit <url>` | New `$exception` events in PostHog tied to the preview URL. The `lessly:errors` skill is planned; until it ships, query PostHog directly via the [`posthog:instrument-error-tracking`](https://github.com/posthog/skills) runbook (`event = '$exception' AND $current_url CONTAINS '<host>'`). |
+
+The Diátaxis + banned-vocab + brand-tokens checks already live in [`agents/review-docs-pr.md`](./agents/review-docs-pr.md) and the PR template — the table above only adds the *automated* / *skill-driven* audits.
 
 ## When in doubt
 

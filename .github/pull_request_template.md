@@ -29,6 +29,14 @@ G = green / passes; Y = needs a follow-up but mergeable; R = blocks merge.
 - [ ] **CTA clarity:** the primary action is unambiguous from the visible label alone (G / Y / R: ____)
 - [ ] **Error copy:** error messages name what went wrong AND what the user can do next (G / Y / R: ____)
 
+## Lessly gates
+
+<!-- Run each against the preview URL. See AGENTS.md → Pre-merge gates for what each one checks. -->
+
+- [ ] **Visual conformance** — `/lessly:design audit <preview-url>` (no token violations, no hardcoded hex)
+- [ ] **UX rules** — `/lessly:ux audit <preview-url>` (PASS on every rule, or follow-up issue filed for FAILs)
+- [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` (no new `$exception` events in PostHog tied to this URL; skill is planned, query PostHog directly until it lands)
+
 ## Checklist
 
 - [ ] [`AGENTS.md`](../AGENTS.md) rules followed (no banned vocabulary)
