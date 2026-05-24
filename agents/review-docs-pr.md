@@ -55,6 +55,14 @@ Run through this checklist before approving any PR that touches `content/`.
 - [ ] All in-page links resolve in the PR preview.
 - [ ] No bare `#123` GitHub refs in content (auto-link side effects — see lessly-hub conventions).
 
+## 8. Lessly gates (against preview URL)
+
+These are skill-driven audits. The PR template asks the author to tick them; the reviewer's job is to spot-check that the answer is honest. See [`AGENTS.md`](../AGENTS.md) → **Pre-merge gates** for what each one checks.
+
+- [ ] **Visual conformance** — `/lessly:design audit <preview-url>` shows no token violations / hardcoded hex.
+- [ ] **UX rules** — `/lessly:ux audit <preview-url>` passes all rules, or each FAIL has a follow-up issue linked in the PR body.
+- [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` is clean (no new `$exception` events tied to the preview URL). The `lessly:errors` skill is planned; until then a PostHog HogQL query against `event = '$exception'` filtered to the preview host is acceptable.
+
 ## After review
 
 Leave one of:

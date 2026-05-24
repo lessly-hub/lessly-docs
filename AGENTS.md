@@ -48,6 +48,20 @@ pnpm test:e2e           # Playwright happy-path + axe a11y
 pnpm verify:ai          # AI surface checks (needs a running preview server)
 ```
 
+For the full local QA workflow (dev server, browser, all gates), see [`agents/run-local.md`](./agents/run-local.md).
+
+## Pre-merge gates
+
+Run these against the Cloudflare Workers preview URL (or `http://localhost:4321/` for local) before requesting review. Each one catches a different class of regression that the unit suite and `pnpm build` won't.
+
+| Gate | Skill / trigger | What it catches |
+|------|-----------------|-----------------|
+| **Visual conformance** | `/lessly:design audit <url>` | Hardcoded hex colors, off-token spacing, type-scale violations, contrast failures against brand tokens. |
+| **UX rules** | `/lessly:ux audit <url>` | Cognitive load, dead-end pages, missing states (loading / empty / error), CTA clarity, error copy, agent-surface contract. 23 rules, PASS/FAIL per rule. |
+| **Runtime errors** | `/lessly:errors audit <url>` | New `$exception` events in PostHog tied to the preview URL. The `lessly:errors` skill is planned; until it ships, query PostHog directly via the [`posthog:instrument-error-tracking`](https://github.com/posthog/skills) runbook (`event = '$exception' AND $current_url CONTAINS '<host>'`). |
+
+The Diátaxis + banned-vocab + brand-tokens checks already live in [`agents/review-docs-pr.md`](./agents/review-docs-pr.md) and the PR template — the table above only adds the *automated* / *skill-driven* audits.
+
 ## When in doubt
 
 - Page-type questions → `agents/new-docs-page.md`
