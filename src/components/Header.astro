@@ -47,12 +47,22 @@ const activeId = activeGroupId(currentPath);
       </svg>
     </button>
 
-    <a href="/" class="flex items-center gap-2 text-[var(--color-text-primary)] no-underline">
-      <span
-        class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-brand-bright)] font-semibold text-[var(--color-text-on-brand)]"
+    <a href="/" class="flex items-center text-[var(--color-text-primary)] no-underline" aria-label="Lessly Docs home">
+      <img
+        src="/lessly-lockup-h-dark.svg"
+        alt="Lessly Docs"
+        width="104"
+        height="28"
+        class="lessly-brand-lockup lessly-brand-lockup--dark h-7 w-auto"
+      />
+      <img
+        src="/lessly-lockup-h-light.svg"
+        alt=""
+        width="104"
+        height="28"
         aria-hidden="true"
-      >L</span>
-      <span class="font-semibold tracking-tight">Lessly Docs</span>
+        class="lessly-brand-lockup lessly-brand-lockup--light h-7 w-auto"
+      />
     </a>
 
     <nav class="hidden flex-1 items-center gap-6 lg:flex" aria-label="Primary">

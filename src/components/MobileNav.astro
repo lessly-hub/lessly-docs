@@ -32,7 +32,23 @@ const activeId = activeGroupId(normalizedPath);
 >
   <div class="flex h-full flex-col">
     <div class="flex h-[56px] shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
-      <span class="font-semibold tracking-tight">Lessly Docs</span>
+      <a href="/" class="flex items-center text-[var(--color-text-primary)] no-underline" aria-label="Lessly Docs home">
+        <img
+          src="/lessly-lockup-h-dark.svg"
+          alt="Lessly Docs"
+          width="104"
+          height="28"
+          class="lessly-brand-lockup lessly-brand-lockup--dark h-7 w-auto"
+        />
+        <img
+          src="/lessly-lockup-h-light.svg"
+          alt=""
+          width="104"
+          height="28"
+          aria-hidden="true"
+          class="lessly-brand-lockup lessly-brand-lockup--light h-7 w-auto"
+        />
+      </a>
       <button
         type="button"
         data-mobile-nav-close

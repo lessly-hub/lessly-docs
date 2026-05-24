@@ -571,3 +571,15 @@ body {
 .lessly-code .lessly-code__icon {
   display: inline-flex;
 }
+
+/* Brand lockup theme swap. Default theme is dark; the light variant is
+   hidden until the bootstrap script in Layout.astro adds `.light` to <html>. */
+.lessly-brand-lockup--light {
+  display: none;
+}
+html.light .lessly-brand-lockup--dark {
+  display: none;
+}
+html.light .lessly-brand-lockup--light {
+  display: block;
+}
