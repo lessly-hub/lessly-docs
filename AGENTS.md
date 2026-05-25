@@ -91,6 +91,6 @@ The duplication is intentional: the issue says *"this must hold before we close"
 
 ## Voice
 
-All customer-facing copy in `content/docs/` and all agent-facing copy in `content/mcp-tools.json` follows the Notarial register defined in [`lessly-landing/.claude/skills/lessly-voice/SKILL.md`](../lessly-landing/.claude/skills/lessly-voice/SKILL.md). Open and follow it before writing or reviewing docs pages, MCP tool descriptions, or any contributor-facing strings.
+All customer-facing copy in `content/docs/` and all agent-facing copy in `content/mcp-tools.json` follows the Notarial register defined in the `lessly:voice` skill (shipped via the [Lessly team plugin](https://github.com/lessly-hub/claude-lessly-plugin/tree/main/skills/voice)). Invoke it before writing or reviewing docs pages, MCP tool descriptions, or any contributor-facing strings.
 
 The `mcp-tools.json` Layer 4 contract is enforced by `pnpm verify:ai` for the allowlisted tools in `scripts/verify-ai/mcp-tools-layer4.mjs`. When you migrate another tool to the Notarial-Terse register, extend the `ALLOWLIST` constant in that script.
