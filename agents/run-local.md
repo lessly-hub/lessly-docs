@@ -112,7 +112,7 @@ Run these against the local preview URL before opening a PR. They're cheaper to 
 
 # LLM answerability — can a model still answer canonical Lessly questions
 # from /llms-full.txt alone? Run after edits to install.mdx or tools.mdx.
-/lessly:docs-qa --url http://localhost:4321
+# Follow agents/docs-qa.md against http://localhost:4321.
 ```
 
 ## Step 6 — Clean up

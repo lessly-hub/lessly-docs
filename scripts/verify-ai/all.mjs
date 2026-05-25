@@ -7,9 +7,9 @@
  * Each sub-test is a standalone .mjs module that exits 0 on success or
  * non-zero on failure.
  *
- * Answer-correctness checks moved out of CI into the `/lessly:docs-qa`
- * Claude Code skill (see AGENTS.md). The skill runs in a contributor's
- * Claude session — no API key required.
+ * Answer-correctness checks moved out of CI into the agents/docs-qa.md
+ * runbook (see AGENTS.md). Contributors follow it in a Claude session —
+ * no API key required.
  *
  * Usage:
  *   node scripts/verify-ai/all.mjs --base http://localhost:8787

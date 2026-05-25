@@ -53,15 +53,9 @@ For the full local QA workflow (dev server, browser, all gates), see [`agents/ru
 
 ## QA the docs as an LLM would
 
-`pnpm verify:ai` covers the structural AI surface (the files exist, the schemas match, the text equivalence holds). It does **not** check whether an LLM can actually *answer* canonical Lessly questions from the corpus — that lives in a Claude Code skill:
+`pnpm verify:ai` covers the structural AI surface (the files exist, the schemas match, the text equivalence holds). It does **not** check whether an LLM can actually *answer* canonical Lessly questions from the corpus — that lives in an agent runbook: [`agents/docs-qa.md`](./agents/docs-qa.md).
 
-```
-/lessly:docs-qa                          # against https://docs.lessly.com
-/lessly:docs-qa --url http://127.0.0.1:4321
-/lessly:docs-qa --url https://<pr-preview>.workers.dev
-```
-
-The skill fetches `/llms.txt` and `/llms-full.txt`, runs four canonical questions (three positive facts, one negative), and prints a PASS/FAIL table. It's a contributor self-check — not a CI gate — and runs inside your Claude session with no API key. Run it before merging changes to `content/docs/get-started/install.mdx` or `content/docs/reference/tools.mdx`, which own the facts the questions probe.
+Read `agents/docs-qa.md` in your Claude session and follow it against a docs URL (default `https://docs.lessly.com`, or a local `pnpm preview`, or a PR-preview URL). It fetches `/llms.txt` and `/llms-full.txt`, runs four canonical questions (three positive facts, one negative), and prints a PASS/FAIL table. Contributor self-check, not a CI gate; no API key. Run it before merging changes to `content/docs/get-started/install.mdx` or `content/docs/reference/tools.mdx`, which own the facts the questions probe.
 
 ## Pre-merge gates
 
