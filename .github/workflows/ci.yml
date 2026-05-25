@@ -136,7 +136,6 @@ jobs:
 
       - name: Verify AI
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           VERIFY_BASE: http://127.0.0.1:4321
         run: pnpm verify:ai
 

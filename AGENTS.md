@@ -46,10 +46,22 @@ pnpm test               # vitest unit tests
 pnpm check:links        # internal link integrity (run after pnpm build)
 pnpm check:nav-depth    # depth lint for content/docs
 pnpm test:e2e           # Playwright happy-path + axe a11y
-pnpm verify:ai          # AI surface checks (needs a running preview server)
+pnpm verify:ai          # AI-surface schema checks (llms.txt + per-page md/mdx + /mcp/tools.json)
 ```
 
 For the full local QA workflow (dev server, browser, all gates), see [`agents/run-local.md`](./agents/run-local.md).
+
+## QA the docs as an LLM would
+
+`pnpm verify:ai` covers the structural AI surface (the files exist, the schemas match, the text equivalence holds). It does **not** check whether an LLM can actually *answer* canonical Lessly questions from the corpus — that lives in a Claude Code skill:
+
+```
+/lessly:docs-qa                          # against https://docs.lessly.com
+/lessly:docs-qa --url http://127.0.0.1:4321
+/lessly:docs-qa --url https://<pr-preview>.workers.dev
+```
+
+The skill fetches `/llms.txt` and `/llms-full.txt`, runs four canonical questions (three positive facts, one negative), and prints a PASS/FAIL table. It's a contributor self-check — not a CI gate — and runs inside your Claude session with no API key. Run it before merging changes to `content/docs/get-started/install.mdx` or `content/docs/reference/tools.mdx`, which own the facts the questions probe.
 
 ## Pre-merge gates
 
