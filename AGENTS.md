@@ -82,3 +82,9 @@ The duplication is intentional: the issue says *"this must hold before we close"
 - Not the API reference for service-to-service calls (those live with each service).
 - Not the builder rulebook for extension authors (that's `extensions-guide`).
 - Not the team SOP repo (that's `team-guidebook`).
+
+## Voice
+
+All customer-facing copy in `content/docs/` and all agent-facing copy in `content/mcp-tools.json` follows the Notarial register defined in [`lessly-landing/.claude/skills/lessly-voice/SKILL.md`](../lessly-landing/.claude/skills/lessly-voice/SKILL.md). Open and follow it before writing or reviewing docs pages, MCP tool descriptions, or any contributor-facing strings.
+
+The `mcp-tools.json` Layer 4 contract is enforced by `pnpm verify:ai` for the allowlisted tools in `scripts/verify-ai/mcp-tools-layer4.mjs`. When you migrate another tool to the Notarial-Terse register, extend the `ALLOWLIST` constant in that script.
