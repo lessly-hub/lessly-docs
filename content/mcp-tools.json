@@ -4,7 +4,7 @@
     {
       "name": "lessly_deploy",
       "summary": "Build and deploy a git ref to a Lessly environment.",
-      "description": "Triggers a build of the specified git ref and promotes the resulting artifact to the target environment. Returns a deployment id you can poll with lessly_get_deployment or stream logs from with lessly_get_logs.",
+      "description": "Build and deploy a git ref to a Lessly environment. Returns: { deployment_id, status: 'queued'|'building', build_logs_url }. Typical sequence: lessly_deploy → poll lessly_get_deployment until status is 'ready' or 'error'. Fails when: ref is not pushed to the remote, or the environment is locked by another in-flight deploy. Irreversible for environment: production — use environment: preview-<slug> to dry-run.",
       "args": [
         { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app to deploy (matches the name in your workspace)." },
         { "name": "ref", "type": "string", "required": false, "description": "Git ref — branch name, tag, or commit SHA. Defaults to the app's default branch.", "default": "main" },
@@ -20,7 +20,7 @@
     {
       "name": "lessly_get_deployment",
       "summary": "Fetch the status and metadata of a single deployment.",
-      "description": "Returns the current state (queued, building, deploying, ready, failed, canceled), the build duration, the commit metadata, and the URL of the deployment. Use this to poll a deployment kicked off without wait=true.",
+      "description": "Fetch the state, metadata, and URL of a single deployment. For a list of recent deployments, use lessly_list_deployments instead. Returns: { deployment_id, state: 'queued'|'building'|'deploying'|'ready'|'failed'|'canceled', commit_sha, commit_message, environment, url, started_at, finished_at }. Use to poll a deployment kicked off with wait=false.",
       "args": [
         { "name": "deployment_id", "type": "string", "required": true, "description": "Id returned by lessly_deploy or lessly_list_deployments." }
       ],
@@ -33,7 +33,7 @@
     {
       "name": "lessly_list_deployments",
       "summary": "List recent deployments for an app, newest first.",
-      "description": "Returns up to limit deployments for the given app, sorted by created_at descending. Filter by environment to scope the list (for example, only production deploys) or by status to find the last successful build.",
+      "description": "List recent deployments for an app, newest first. For a single deployment's status or logs, use lessly_get_deployment instead. Returns: { deployment_id, git_ref, environment, status, created_at }[]. Paginated; default limit 20. Filter by environment or status to narrow.",
       "args": [
         { "name": "app", "type": "string", "required": true, "description": "Slug of the Lessly app." },
         { "name": "environment", "type": "\"production\" | \"staging\" | \"preview\"", "required": false, "description": "Restrict results to one environment." },
