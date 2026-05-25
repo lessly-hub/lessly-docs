@@ -29,6 +29,7 @@ const base = (() => {
 
 const tests = [
   { name: 'mcp-tools-schema', file: 'mcp-tools-schema.mjs' },
+  { name: 'mcp-tools-layer4', file: 'mcp-tools-layer4.mjs' },
   { name: 'llms-listing', file: 'llms-listing.mjs' },
   { name: 'text-equivalence', file: 'text-equivalence.mjs' },
 ];

@@ -68,3 +68,71 @@ describe('getMcpTool', () => {
     expect(getMcpTool('not_a_real_tool_xyz')).toBeUndefined();
   });
 });
+
+describe('Layer 4 contract — Notarial-Terse for allowlisted tools', () => {
+  // Tools that have been rewritten to the Notarial-Terse register.
+  // Expand as more tools are migrated (see follow-up issues).
+  const layer4Tools = ['lessly_deploy', 'lessly_get_deployment', 'lessly_list_deployments'];
+
+  it.each(layer4Tools)('%s description starts with a verb (no tool-name restatement)', (name) => {
+    const tool = getMcpTool(name);
+    expect(tool).toBeDefined();
+    const desc = tool!.description;
+    // No tool-name restatement at start
+    expect(desc.toLowerCase().startsWith(name.toLowerCase())).toBe(false);
+    // Starts with a capitalized verb
+    expect(desc).toMatch(/^[A-Z][a-z]+/);
+  });
+
+  it.each(layer4Tools)('%s description contains a Returns: contract', (name) => {
+    const tool = getMcpTool(name);
+    expect(tool).toBeDefined();
+    expect(tool!.description).toMatch(/Returns:\s*[`{]/);
+  });
+
+  it.each(layer4Tools)('%s description bans hedge tokens', (name) => {
+    const tool = getMcpTool(name);
+    expect(tool).toBeDefined();
+    const desc = tool!.description;
+    const hedges = [' may ', ' usually ', ' optionally ', ' if available '];
+    for (const hedge of hedges) {
+      expect(desc.toLowerCase()).not.toContain(hedge);
+    }
+  });
+
+  it.each(layer4Tools)('%s description bans marketing tokens', (name) => {
+    const tool = getMcpTool(name);
+    expect(tool).toBeDefined();
+    const desc = tool!.description;
+    const marketing = ['powerful', 'simple', 'easy', 'comprehensive', 'seamless', 'robust'];
+    for (const word of marketing) {
+      expect(desc.toLowerCase()).not.toContain(word);
+    }
+  });
+
+  it('lessly_deploy description names an irreversibility scope', () => {
+    const tool = getMcpTool('lessly_deploy');
+    expect(tool).toBeDefined();
+    // Either bare "Irreversible." or scoped "Irreversible for ..."
+    expect(tool!.description).toMatch(/Irreversible(\.|\s+for)/);
+  });
+
+  it('lessly_deploy description includes a Fails when: disclosure', () => {
+    const tool = getMcpTool('lessly_deploy');
+    expect(tool).toBeDefined();
+    expect(tool!.description).toMatch(/Fails when:\s/);
+  });
+
+  it('lessly_deploy description includes a Typical sequence: planning hint', () => {
+    const tool = getMcpTool('lessly_deploy');
+    expect(tool).toBeDefined();
+    expect(tool!.description).toMatch(/Typical sequence:\s/);
+  });
+
+  it('lessly_list_deployments names its sibling disambiguator', () => {
+    const tool = getMcpTool('lessly_list_deployments');
+    expect(tool).toBeDefined();
+    // Must mention lessly_get_deployment as the sibling
+    expect(tool!.description).toContain('lessly_get_deployment');
+  });
+});
