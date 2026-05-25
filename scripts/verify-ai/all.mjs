@@ -2,12 +2,14 @@
 /**
  * verify-ai/all.mjs
  *
- * Run all four AI-surface verifications in sequence and print a summary.
+ * Run all AI-surface verifications in sequence and print a summary.
  *
  * Each sub-test is a standalone .mjs module that exits 0 on success or
- * non-zero on failure. answer-correctness.mjs may exit 0 with "SKIP:"
- * in its output when no API key is configured; we surface that as SKIP
- * rather than PASS in the summary.
+ * non-zero on failure.
+ *
+ * Answer-correctness checks moved out of CI into the agents/docs-qa.md
+ * runbook (see AGENTS.md). Contributors follow it in a Claude session —
+ * no API key required.
  *
  * Usage:
  *   node scripts/verify-ai/all.mjs --base http://localhost:8787
@@ -29,7 +31,6 @@ const tests = [
   { name: 'mcp-tools-schema', file: 'mcp-tools-schema.mjs' },
   { name: 'llms-listing', file: 'llms-listing.mjs' },
   { name: 'text-equivalence', file: 'text-equivalence.mjs' },
-  { name: 'answer-correctness', file: 'answer-correctness.mjs' },
 ];
 
 console.log(`verify-ai: base=${base}`);
@@ -38,12 +39,8 @@ console.log('');
 const results = [];
 for (const t of tests) {
   console.log(`────────── ${t.name} ──────────`);
-  const { code, stdout } = await run(join(here, t.file), ['--base', base]);
-  // SKIP detection: only meaningful for answer-correctness (the only test
-  // that opts into skipping). Treat any leading "SKIP:" in stdout +
-  // exit-0 as SKIP.
-  const skipped = code === 0 && /^SKIP:/m.test(stdout);
-  const status = skipped ? 'SKIP' : code === 0 ? 'PASS' : 'FAIL';
+  const { code } = await run(join(here, t.file), ['--base', base]);
+  const status = code === 0 ? 'PASS' : 'FAIL';
   results.push({ name: t.name, status, code });
   console.log('');
 }
@@ -59,19 +56,7 @@ process.exit(anyFail ? 1 : 0);
 
 function run(file, args) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [file, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (d) => {
-      const s = d.toString();
-      stdout += s;
-      process.stdout.write(s);
-    });
-    child.stderr.on('data', (d) => {
-      const s = d.toString();
-      stderr += s;
-      process.stderr.write(s);
-    });
-    child.on('close', (code) => resolve({ code: code ?? 1, stdout, stderr }));
+    const child = spawn(process.execPath, [file, ...args], { stdio: 'inherit' });
+    child.on('close', (code) => resolve({ code: code ?? 1 }));
   });
 }

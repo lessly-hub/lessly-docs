@@ -109,6 +109,10 @@ Run these against the local preview URL before opening a PR. They're cheaper to 
 # Runtime errors via PostHog ($exception events from preview traffic)
 # Until the lessly:errors skill lands, use posthog:instrument-error-tracking
 # to query: events WHERE event='$exception' AND $current_url CONTAINS 'localhost:4321'
+
+# LLM answerability — can a model still answer canonical Lessly questions
+# from /llms-full.txt alone? Run after edits to install.mdx or tools.mdx.
+# Follow agents/docs-qa.md against http://localhost:4321.
 ```
 
 ## Step 6 — Clean up
