@@ -50,7 +50,7 @@ Question pack (canonical; bump when product surface changes):
 | # | Question | Expected | Source page |
 |---|----------|----------|-------------|
 | 1 | What MCP server URL do I use to add Lessly to Claude Code? | `https://mcp.lessly.com` | `content/docs/get-started/install.mdx` |
-| 2 | How many MCP tools does Lessly expose? | `8` (or `eight`) | `content/docs/reference/tools.mdx` |
+| 2 | How many tools are listed in the Lessly MCP tools catalog? | `8` (or `eight`) | `content/docs/reference/tools.mdx` |
 | 3 | Name the MCP tool that deploys a git ref. | `lessly_deploy` | `content/docs/reference/tools.mdx` |
 | 4 | What is the capital of France? | model declines / "not in docs" — **must not** mention Paris | (negative — not in corpus) |
 
@@ -58,6 +58,8 @@ For each question, judge PASS/FAIL inline:
 
 - **Positive (1–3):** PASS if the answer contains the expected token (case-insensitive substring is fine — "the tool is `lessly_deploy`" counts). FAIL if the token is missing or a different value appears (e.g. answer says "7 tools" for #2).
 - **Negative (4):** PASS if the answer declines clearly ("not in the docs", "I don't know", "the corpus doesn't cover this") AND does **not** include the word "Paris". FAIL if Paris leaks — that means the corpus context didn't isolate the answer from background knowledge.
+
+> **Why Q2 names the catalog.** The earlier phrasing — "How many MCP tools does Lessly expose?" — was ambiguous: a careful reader could count the eight entries in `tools.mdx` *or* the raw `lessly_*` token occurrences across the whole corpus (which has crept higher when other pages mention tool names in passing). Anchoring the question to "the Lessly MCP tools catalog" points the reader at one specific list — `tools.mdx`, mirrored as the `## Tools` bullets in `/llms-full.txt` — so the check measures docs answerability, not the reader's counting strategy. When the catalog grows, bump the expected value in the table above.
 
 ## Step 4 — Render the table
 
