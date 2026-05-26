@@ -1,7 +1,7 @@
 # Catch-all
-* @asabirov @anton-khovanskiy
+* @asabirov
 
-# Brand layer
+# Brand layer — auto-request @anton-khovanskiy only on his UI/branding paths
 /theme.css                @anton-khovanskiy
 /src/app/global.css       @anton-khovanskiy
 /src/app/layout.tsx       @anton-khovanskiy
