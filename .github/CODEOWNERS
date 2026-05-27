@@ -1,21 +1,8 @@
 # Catch-all
 * @asabirov
 
-# Brand layer — auto-request @anton-khovanskiy only on his UI/branding paths
-/theme.css                @anton-khovanskiy
-/src/app/global.css       @anton-khovanskiy
-/src/app/layout.tsx       @anton-khovanskiy
-/src/components/          @anton-khovanskiy
-/public/diagrams/         @anton-khovanskiy
-/public/fonts/            @anton-khovanskiy
-/public/logo/             @anton-khovanskiy
 
 # Content
-/content/docs/deployment/    @IvanRoslov @alexeylivadnyi-apliteni
-/content/docs/get-started/   @asabirov
-/content/docs/concepts/      @asabirov
-/content/docs/security/      @IvanRoslov @alexeylivadnyi-apliteni
+/content/docs/deployment/    @IvanRoslov
+/content/docs/security/      @IvanRoslov
 
-# Agent surface
-/AGENTS.md           @asabirov
-/agents/             @asabirov
