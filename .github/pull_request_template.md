@@ -16,7 +16,7 @@ engine; see AGENTS.md for the load-bearing rules.
 - [ ] Reference — dry facts
 - [ ] N/A — non-content change
 
-## UX 5-check (per `lessly:ux`)
+## UX walk 5-check (per `lessly:ux walk <preview-url>`)
 
 <!--
 Tick each box once verified on the Cloudflare Pages preview URL.
@@ -34,7 +34,7 @@ G = green / passes; Y = needs a follow-up but mergeable; R = blocks merge.
 <!-- Run each against the preview URL. See AGENTS.md → Pre-merge gates for what each one checks. -->
 
 - [ ] **Visual conformance** — `/lessly:design audit <preview-url>` (no token violations, no hardcoded hex)
-- [ ] **UX rules** — `/lessly:ux audit <preview-url>` (PASS on every rule, or follow-up issue filed for FAILs)
+- [ ] **UX walk** — `/lessly:ux walk <preview-url>` (returns `clean`, or follow-up issue filed for any Y/R)
 - [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` (no new `$exception` events in PostHog tied to this URL; skill is planned, query PostHog directly until it lands)
 
 ## Checklist
