@@ -27,7 +27,7 @@ User-behavioral criteria — what the reader can do, see, or experience after th
 Quality bar — the [Lessly gates](../AGENTS.md#pre-merge-gates) that must pass against the preview URL before this can close:
 
 - [ ] **Visual conformance** — `/lessly:design audit <preview-url>` shows no token violations / hardcoded hex
-- [ ] **UX rules** — `/lessly:ux audit <preview-url>` passes all rules, or each FAIL has a follow-up issue linked
+- [ ] **UX walk** — `/lessly:ux walk <preview-url>` returns `clean`, or each Y/R has a follow-up issue linked
 - [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` clean (no new `$exception` events tied to the preview URL)
 
 <!-- If this issue only touches non-content files (CONTRIBUTING.md, agents/,
