@@ -30,7 +30,7 @@ export function wireCopyButtons(): void {
     button.addEventListener('click', () => {
       // Optimistic UI: flip label + icons synchronously so the user sees
       // feedback in the same frame as the click, before the async clipboard
-      // call resolves. lessly:ux: every action needs feedback inside ~100ms.
+      // call resolves. lessly:ux audit rule 3.2: every action needs feedback inside ~100ms.
       if (label) label.textContent = copiedLabel;
       copyIcon?.classList.add('hidden');
       checkIcon?.classList.remove('hidden');

@@ -209,7 +209,7 @@ URL convention preserved: all routes stay under `/docs/*`. Root `/` becomes a re
 | Link integrity (no broken internal refs) | build-time check |
 | Lighthouse: CLS ≤ 0.05, LCP ≤ 1.5s | Lighthouse CI |
 | Visual regression | Playwright + per-page snapshots |
-| 5-check UX audit on interactive flows | `lessly:ux` checklist in PR template |
+| 5-check UX walk on interactive flows | `lessly:ux walk` checklist in PR template |
 | Type check | Astro check + `tsc --noEmit` |
 | MCP tools JSON schema | Zod validation in build |
 
@@ -240,7 +240,7 @@ Per slice, dispatch parallel work to subagents:
   - After S2, S4, S6 → `gstack-qa-lead` (`/gstack-qa-only`) headless browser walk
   - At S7 → `gstack-release-engineer` (`/gstack-land-and-deploy`)
 - **Design audit** at S2 and S6 → `/lessly:design audit` against the preview URL.
-- **UX audit** at S2, S3, S4, S6 → `lessly:ux` 5-check checklist on the new interactive flow.
+- **UX walk** at S2, S3, S4, S6 → `lessly:ux walk` 5-check checklist on the new interactive flow.
 
 ## Rollout (don't break docs.lessly.com)
 
@@ -269,7 +269,7 @@ Per slice, dispatch parallel work to subagents:
 - All CI gates green on `main`.
 - `gstack-review` passes on the cut-over PR.
 - `lessly:design audit` returns `clean` on `https://docs.lessly.com`.
-- `lessly:ux` returns `clean` on each interactive flow.
+- `lessly:ux walk` returns `clean` on each interactive flow.
 - A spot-check LLM crawl successfully answers three known questions using only `/llms.txt` + `/llms-full.txt`.
 - Build time on CI ≤ 60 s including Pagefind + Playwright.
 - Lighthouse on three representative pages: Performance ≥ 95, Accessibility ≥ 95, Best Practices ≥ 95, SEO ≥ 95.

@@ -17,7 +17,7 @@ Run through this checklist before approving any PR that touches `content/`.
 
 ## 2. Content shape
 
-- [ ] Page answers exactly one question (lessly:ux rule 2.1).
+- [ ] Page answers exactly one question (lessly:ux audit rule 2.1).
 - [ ] Word count under template budget (≤ 1500 unless explicitly approved).
 - [ ] Tutorial steps are numbered, ≤ 10, each is one action.
 - [ ] How-to has a "Verify it works" section with a concrete check.
@@ -60,7 +60,7 @@ Run through this checklist before approving any PR that touches `content/`.
 These are skill-driven audits. The PR template asks the author to tick them; the reviewer's job is to spot-check that the answer is honest. See [`AGENTS.md`](../AGENTS.md) → **Pre-merge gates** for what each one checks.
 
 - [ ] **Visual conformance** — `/lessly:design audit <preview-url>` shows no token violations / hardcoded hex.
-- [ ] **UX rules** — `/lessly:ux audit <preview-url>` passes all rules, or each FAIL has a follow-up issue linked in the PR body.
+- [ ] **UX walk** — `/lessly:ux walk <preview-url>` returns `clean` (all 5 checks G), or each Y/R has a follow-up issue linked in the PR body.
 - [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` is clean (no new `$exception` events tied to the preview URL). The `lessly:errors` skill is planned; until then a PostHog HogQL query against `event = '$exception'` filtered to the preview host is acceptable.
 
 ## After review

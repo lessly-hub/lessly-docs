@@ -152,7 +152,7 @@ test.describe('Slice 6 — happy-path surfaces', () => {
 
     await copyButton.click();
 
-    // lessly:ux — every action gets feedback inside ~100ms. The wire-up flips
+    // lessly:ux audit rule 3.2 — every action gets feedback inside ~100ms. The wire-up flips
     // the label synchronously inside the click handler, so this resolves on
     // the next microtask, well under the budget.
     await expect(copyButton).toContainText('Copied', { timeout: 200 });

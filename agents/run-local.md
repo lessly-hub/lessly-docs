@@ -103,8 +103,9 @@ Run these against the local preview URL before opening a PR. They're cheaper to 
 # (Lessly design skill — checks hex colors, spacing scale, typography)
 /lessly:design audit http://localhost:4321/
 
-# UX rules pass/fail audit (23 rules across 8 categories)
-/lessly:ux audit http://localhost:4321/
+# UX live happy-path walk on the local preview (5 G/Y/R checks)
+# For static rule-by-rule PASS/FAIL of a page, use `/lessly:ux audit` instead.
+/lessly:ux walk http://localhost:4321/
 
 # Runtime errors via PostHog ($exception events from preview traffic)
 # Until the lessly:errors skill lands, use posthog:instrument-error-tracking
