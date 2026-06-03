@@ -1,0 +1,42 @@
+---
+/**
+ * Brand lockup — single <img> whose src is resolved client-side from the
+ * current theme. The previous "render both variants, hide one with CSS"
+ * pattern made Chrome download both 81KB SVGs on every cold load, blowing
+ * the Lighthouse LCP budget (issue #56).
+ *
+ * We emit no `src` at SSR; the trailing inline script sets the correct
+ * variant before the parser can fetch anything. Pair with ThemeToggle —
+ * its click handler re-resolves the src so the live swap keeps working.
+ *
+ * Mark up the wrapping `<a>` (or other interactive parent) with
+ * `aria-label`; this component's `<img>` is decorative inside that label.
+ */
+interface Props {
+  /** Override the default `alt`. Pass `""` when the wrapping element already labels the link. */
+  alt?: string;
+  /** Visual width in px; height scales by the SVG's intrinsic aspect ratio. */
+  width?: number;
+  /** Visual height in px. */
+  height?: number;
+  /** Extra classes for the `<img>` (sizing, spacing). */
+  class?: string;
+}
+
+const { alt = 'Lessly Docs', width = 104, height = 28, class: className = '' } = Astro.props;
+---
+
+<img
+  alt={alt}
+  width={width}
+  height={height}
+  data-brand-lockup
+  class:list={['lessly-brand-lockup', className]}
+/>
+<script is:inline>
+  (function () {
+    var img = document.currentScript.previousElementSibling;
+    var light = document.documentElement.classList.contains('light');
+    img.src = light ? '/lessly-lockup-h-light.svg' : '/lessly-lockup-h-dark.svg';
+  })();
+</script>
