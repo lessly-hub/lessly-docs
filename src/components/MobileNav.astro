@@ -12,6 +12,7 @@
  * the logic relocated from the old multi-section sidebar; the active section
  * starts expanded.
  */
+import BrandLockup from './BrandLockup.astro';
 import { getNav, activeGroupId } from '@/lib/nav';
 
 interface Props {
@@ -33,21 +34,7 @@ const activeId = activeGroupId(normalizedPath);
   <div class="flex h-full flex-col">
     <div class="flex h-[56px] shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
       <a href="/" class="flex items-center text-[var(--color-text-primary)] no-underline" aria-label="Lessly Docs home">
-        <img
-          src="/lessly-lockup-h-dark.svg"
-          alt="Lessly Docs"
-          width="104"
-          height="28"
-          class="lessly-brand-lockup lessly-brand-lockup--dark h-7 w-auto"
-        />
-        <img
-          src="/lessly-lockup-h-light.svg"
-          alt=""
-          width="104"
-          height="28"
-          aria-hidden="true"
-          class="lessly-brand-lockup lessly-brand-lockup--light h-7 w-auto"
-        />
+        <BrandLockup alt="" class="h-7 w-auto" />
       </a>
       <button
         type="button"

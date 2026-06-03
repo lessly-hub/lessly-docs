@@ -61,6 +61,15 @@ const moonSvg = renderIcon(Moon as unknown as LucideIcon, { size: 16, class: 'le
       const next = root.classList.contains('light') ? 'dark' : 'light';
       root.classList.toggle('light', next === 'light');
       document.cookie = `${cookieName}=${next}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+      // Repoint any brand lockups to the matching variant. The other variant
+      // gets fetched lazily on first swap; the browser caches it, so the
+      // next toggle is instant (issue #56 DoD).
+      const lockupSrc = next === 'light'
+        ? '/lessly-lockup-h-light.svg'
+        : '/lessly-lockup-h-dark.svg';
+      document.querySelectorAll<HTMLImageElement>('img[data-brand-lockup]').forEach((img) => {
+        img.src = lockupSrc;
+      });
       syncAria();
     });
   }

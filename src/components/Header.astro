@@ -7,6 +7,7 @@
  * current section is marked active. Tabs show at `lg` and up, alongside the
  * desktop sidebar; below `lg` a hamburger opens the mobile drawer (MobileNav).
  */
+import BrandLockup from './BrandLockup.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import { getNav, activeGroupId, sectionHref } from '@/lib/nav';
 
@@ -48,21 +49,7 @@ const activeId = activeGroupId(currentPath);
     </button>
 
     <a href="/" class="flex items-center text-[var(--color-text-primary)] no-underline" aria-label="Lessly Docs home">
-      <img
-        src="/lessly-lockup-h-dark.svg"
-        alt="Lessly Docs"
-        width="104"
-        height="28"
-        class="lessly-brand-lockup lessly-brand-lockup--dark h-7 w-auto"
-      />
-      <img
-        src="/lessly-lockup-h-light.svg"
-        alt=""
-        width="104"
-        height="28"
-        aria-hidden="true"
-        class="lessly-brand-lockup lessly-brand-lockup--light h-7 w-auto"
-      />
+      <BrandLockup alt="" class="h-7 w-auto" />
     </a>
 
     <nav class="hidden flex-1 items-center gap-6 lg:flex" aria-label="Primary">
