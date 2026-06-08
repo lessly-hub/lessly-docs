@@ -26,9 +26,9 @@ User-behavioral criteria — what the reader can do, see, or experience after th
 
 Path coverage — both the human path and the agent path are documented (rule 5 in [`AGENTS.md`](../AGENTS.md#the-five-load-bearing-rules)):
 
-- [ ] **Human path (UI)** documented for the new or changed capability
-- [ ] **Agent path (MCP)** documented — OR the page declares **"Agent-only"** with a one-line rationale
-- [ ] Required **token scope / permission** named in the agent section
+- [ ] **UI path** documented for the new or changed capability
+- [ ] **MCP path** documented — OR the page declares **"Agent-only"** with a one-line rationale
+- [ ] Required **token scope / permission** named in the MCP section
 
 Quality bar — the [Lessly gates](../AGENTS.md#pre-merge-gates) that must pass against the preview URL before this can close:
 

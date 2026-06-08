@@ -65,7 +65,7 @@ Recap of what now exists or works.
 
 ### How-to
 
-> **Transitional form.** The subheads below are sequential because the per-step `<Tabs>` component is not built yet. Migration to per-step Tabs (shared prose, action steps switch with a sticky UI/Agent toggle) is tracked in [#48](https://github.com/lessly-hub/lessly-docs/issues/48). Rule 5 (paths covered) holds either way.
+> **Transitional form.** The subheads below are sequential because the per-step `<Tabs>` component is not built yet. Migration to per-step Tabs (shared prose, action steps switch with a sticky UI / MCP toggle) is tracked in [#48](https://github.com/lessly-hub/lessly-docs/issues/48). Rule 5 (paths covered) holds either way.
 
 ```mdx
 # Title
@@ -75,10 +75,10 @@ Recap of what now exists or works.
 ## Problem
 One sentence describing the situation this page solves.
 
-## Through the UI
+## UI
 Numbered steps a human follows in `app.lessly.com`. One happy path.
 
-## Through an agent
+## MCP
 The same outcome via the Lessly MCP server installed in the customer's AI agent.
 - Name the required **token scope / permission**.
 - Tool name + minimal invocation. REST API or CLI listed as alternates only when material.
