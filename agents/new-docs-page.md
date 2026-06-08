@@ -64,6 +64,9 @@ Recap of what now exists or works.
 ```
 
 ### How-to
+
+> **Transitional form.** The subheads below are sequential because the per-step `<Tabs>` component is not built yet. Migration to per-step Tabs (shared prose, action steps switch with a sticky UI/Agent toggle) is tracked in [#48](https://github.com/lessly-hub/lessly-docs/issues/48). Rule 5 (paths covered) holds either way.
+
 ```mdx
 # Title
 
@@ -72,11 +75,22 @@ Recap of what now exists or works.
 ## Problem
 One sentence describing the situation this page solves.
 
-## Solution
-Numbered steps OR a config snippet. One happy path.
+## Through the UI
+Numbered steps a human follows in `app.lessly.com`. One happy path.
+
+## Through an agent
+The same outcome via the Lessly MCP server installed in the customer's AI agent.
+- Name the required **token scope / permission**.
+- Tool name + minimal invocation. REST API or CLI listed as alternates only when material.
+
+<!--
+If the capability is agent-only, REPLACE the two sections above with a single
+"Agent-only" callout that names the rationale (e.g. bulk operation, discovery
+flow). See AGENTS.md rule 5.
+-->
 
 ## Verify it works
-One observable 30-second check.
+One observable 30-second check. Show it for both paths if they differ.
 
 ## Variations
 Optional. Common deviations from the happy path.
@@ -109,6 +123,8 @@ What it does NOT do. Caps and limits.
 
 (one table OR one alphabetized list, minimal prose)
 ```
+
+For capability references (tables of actions / operations), include paired columns or paired sections showing the **UI path** and the **MCP tool name**. Agent-only operations get an explicit "Agent-only" marker in that row. See AGENTS.md rule 5.
 
 ## Step 4 — Banned vocabulary check
 
