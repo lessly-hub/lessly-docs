@@ -37,9 +37,17 @@ G = green / passes; Y = needs a follow-up but mergeable; R = blocks merge.
 - [ ] **UX walk** — `/lessly:ux walk <preview-url>` (returns `clean`, or follow-up issue filed for any Y/R)
 - [ ] **Runtime errors** — `/lessly:errors audit <preview-url>` (no new `$exception` events in PostHog tied to this URL; skill is planned, query PostHog directly until it lands)
 
+## Human + agent path coverage (rule 5)
+
+<!-- Per AGENTS.md rule 5: every how-to and reference page documents BOTH paths, or declares Agent-only. -->
+
+- [ ] **Human path (UI)** section present (or N/A — explanation / tutorial page)
+- [ ] **Agent path (MCP)** section present — OR an **"Agent-only"** callout with a one-line rationale
+- [ ] Required **token scope / permission** named in the agent section
+
 ## Checklist
 
-- [ ] [`AGENTS.md`](../AGENTS.md) rules followed (no banned vocabulary)
+- [ ] [`AGENTS.md`](../AGENTS.md) rules followed (no banned vocabulary, parity preserved)
 - [ ] Frontmatter present (`title:`, `description:`, `diataxis:`, `status:` if applicable)
 - [ ] `pnpm test`, `pnpm check:links`, `pnpm test:e2e` pass locally
 - [ ] Cloudflare Pages preview URL inspected
