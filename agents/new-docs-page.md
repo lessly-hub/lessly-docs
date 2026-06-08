@@ -64,6 +64,9 @@ Recap of what now exists or works.
 ```
 
 ### How-to
+
+> **Transitional form.** The subheads below are sequential because the per-step `<Tabs>` component is not built yet. Migration to per-step Tabs (shared prose, action steps switch with a sticky UI/Agent toggle) is tracked in [#48](https://github.com/lessly-hub/lessly-docs/issues/48). Rule 5 (paths covered) holds either way.
+
 ```mdx
 # Title
 
