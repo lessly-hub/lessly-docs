@@ -27,40 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Banned-vocab lint (content)
-        # Two banned terms per AGENTS.md / CONTRIBUTING.md:
-        #   - `extension` (case-insensitive, word boundary)
-        #   - `Dev Console` (case-sensitive exact phrase)
-        # Exclude `glossary/` and stripped code fences/spans.
-        run: |
-          set -euo pipefail
-          shopt -s globstar nullglob
-          fail=0
-          for file in content/docs/**/*.mdx content/docs/**/*.md; do
-            [ -e "$file" ] || continue
-            case "$file" in
-              *glossary/*) continue ;;
-            esac
-            stripped=$(awk '
-              BEGIN { in_fence = 0 }
-              /^```/ { in_fence = !in_fence; next }
-              in_fence == 0 { print }
-            ' "$file" | sed -E 's/`[^`]*`//g')
-            if printf "%s\n" "$stripped" | grep -nE -i '\bextension\b' >/dev/null; then
-              echo "::error file=$file::contains banned word 'extension'"
-              printf "%s\n" "$stripped" | grep -nE -i '\bextension\b' | sed "s|^|$file:|"
-              fail=1
-            fi
-            if printf "%s\n" "$stripped" | grep -n 'Dev Console' >/dev/null; then
-              echo "::error file=$file::contains banned phrase 'Dev Console'"
-              printf "%s\n" "$stripped" | grep -n 'Dev Console' | sed "s|^|$file:|"
-              fail=1
-            fi
-          done
-          if [ "$fail" -ne 0 ]; then
-            echo "Banned vocabulary detected. See AGENTS.md."
-            exit 1
-          fi
-          echo "lint-vocab: content clean"
+        # Full banned list + matching logic live in scripts/check-vocab.mjs
+        # (single source of truth — AGENTS.md and the docs point there). Greps
+        # all six terms, excludes glossary/, strips code fences and inline code.
+        run: node scripts/check-vocab.mjs
       - name: Nav-depth lint
         run: node scripts/check-nav-depth.mjs
 
