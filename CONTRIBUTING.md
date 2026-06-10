@@ -30,7 +30,7 @@ pnpm verify:ai          # AI surface checks (needs a running preview)
 
 ## Banned vocabulary
 
-Customer-facing content never uses: `extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, `*-extension` repo names. CI fails the PR if `extension` or `Dev Console` appears in `content/`. The other four are review-enforced — flag them in PR review, don't merge without a fix.
+Customer-facing content never uses: `extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, `*-extension` repo names. **Source of truth for the list — [`scripts/check-vocab.mjs`](./scripts/check-vocab.mjs); keep this prose in sync with it.** CI runs that script (`pnpm check:vocab`) on `content/docs/` and fails the PR on any hit — all six terms are gated, not just `extension` / `Dev Console`.
 
 `MCP` is **not** banned — it's the customer install path. Use it plainly.
 

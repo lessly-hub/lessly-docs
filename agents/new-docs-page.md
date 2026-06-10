@@ -128,7 +128,7 @@ For capability references (tables of actions / operations), include paired colum
 
 ## Step 4 — Banned vocabulary check
 
-Before pushing, grep your file for: `extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, or any `*-extension` repo name. None of these belong in customer-facing content. CI will fail your PR if they slip through. (Note: `MCP` is **not** banned — it's the customer's install path and must be discussed plainly.)
+Before pushing, run `pnpm check:vocab` — it scans `content/docs/` for the full banned list (`extension`, `Dev Console`, `manifest`, `synapse`, `gateway`, any `*-extension` repo name). The list lives in [`scripts/check-vocab.mjs`](../scripts/check-vocab.mjs) (single source of truth); the same script is the CI gate, so anything it flags will fail your PR. (Note: `MCP` is **not** banned — it's the customer's install path and must be discussed plainly.)
 
 ## Step 5 — Visual
 
