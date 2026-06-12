@@ -43,23 +43,20 @@ related:                    # other docs pages, by path
 ```mdx
 # Title
 
-<DiataxisBadge type="tutorial" />
-
 ## Goal
 What the reader will have done by the end. One sentence.
 
 ## Prerequisites
 What they need before starting. 3–5 bullets.
 
-## Steps
-1. …
-2. …
-(≤ 10 numbered steps)
+## Step 1 — …
+## Step 2 — …
+(one `## Step N` heading per action, ≤ 10 steps)
 
-## You just did this
+## What you just did
 Recap of what now exists or works.
 
-## Next steps
+## What to do next
 1–3 links to related How-to or Explanation pages.
 ```
 
@@ -69,8 +66,6 @@ Recap of what now exists or works.
 
 ```mdx
 # Title
-
-<DiataxisBadge type="how-to" />
 
 ## Problem
 One sentence describing the situation this page solves.
@@ -100,8 +95,6 @@ Optional. Common deviations from the happy path.
 ```mdx
 # Title
 
-<DiataxisBadge type="explanation" />
-
 ## Overview
 ≤ 80 words. The mental model in one paragraph.
 
@@ -118,8 +111,6 @@ What it does NOT do. Caps and limits.
 ### Reference
 ```mdx
 # Title
-
-<DiataxisBadge type="reference" />
 
 (one table OR one alphabetized list, minimal prose)
 ```
